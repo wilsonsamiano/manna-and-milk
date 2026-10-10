@@ -1,9 +1,12 @@
-Published beta of Sunny ABC, a calm alphabet and numbers game for little ones.
+Sunny ABC 0.1.1, still a published beta.
 
-Download **sunny-abc-beta.apk**, open it on an Android or Fire tablet, and allow install from that source. The game is inside the app and runs offline. There is no Play Store listing.
+What changed:
+- One-file page: **Sunny-ABC.html**. Open it in the browser. Spoken words are inside the file.
+- Dark mode follows the tablet. Hold the sun, then Appearance, to pick Auto, Light, or Dark.
+- Tracing stops when the finger lifts. The next touch starts a new line.
 
-**Sunny-ABC.html** is the same game as one file. Download it and open it in the browser. The spoken words are inside the file, so nothing else is needed, and it plays offline.
+Download **sunny-abc-beta.apk** and open it on an Android or Fire tablet. Allow install from that source. It is signed with the same key as 0.1.0, so it replaces that beta. Not on the Play Store. The game runs offline.
 
-Hold the sun for grown-ups (letter and number ranges, voice on or off, light or dark).
+Hold the sun for grown-ups (letter and number ranges, voice, light or dark).
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)
