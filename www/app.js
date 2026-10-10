@@ -247,14 +247,16 @@ var trace = {
   pointerId: null,
   moved: false,
   blockClick: false,
-  points: [],
+  strokes: [],
   samples: [],
   done: [],
   finished: false,
   guides: null,
+  ink: null,
   line: null,
 };
 var voices = [];
+var liveUtterance = null;
 var audioCtx = null;
 var holdTimer = 0;
 var holdEl = null;
@@ -269,6 +271,7 @@ function defaults() {
   return {
     v: 1,
     voice: true,
+    theme: "auto",
     letterRange: "A-E",
     numberRange: "1-10",
     letterIndex: 0,
@@ -284,6 +287,7 @@ function loadSave() {
       var p = JSON.parse(raw);
       if (p && typeof p === "object") {
         if (p.voice === false) d.voice = false;
+        if (p.theme === "light" || p.theme === "dark" || p.theme === "auto") d.theme = p.theme;
         if (rangeById(LETTER_RANGES, p.letterRange)) d.letterRange = p.letterRange;
         if (rangeById(NUMBER_RANGES, p.numberRange)) d.numberRange = p.numberRange;
         if (typeof p.letterIndex === "number") d.letterIndex = p.letterIndex | 0;
@@ -637,7 +641,7 @@ function renderTrace(item) {
     item.ch +
     '"><g class="guides">' +
     paths +
-    '</g><g class="arrows"></g><polyline class="draw-line" points=""></polyline><g class="steps"></g></svg></div><p class="feedback" role="status">Follow the arrows</p>' +
+    '</g><g class="arrows"></g><g class="ink"></g><g class="steps"></g></svg></div><p class="feedback" role="status">Follow the arrows</p>' +
     againBtn() +
     "</div></div>"
   );
@@ -733,6 +737,40 @@ function chips(list, current, action) {
   return html;
 }
 
+function themeChip(id, label) {
+  var on = (save.theme || "auto") === id;
+  return (
+    '<button class="chip' +
+    (on ? " on" : "") +
+    '" data-action="theme" data-value="' +
+    id +
+    '" aria-pressed="' +
+    (on ? "true" : "false") +
+    '">' +
+    label +
+    "</button>"
+  );
+}
+
+function wantsDark() {
+  var mode = save.theme || "auto";
+  if (mode === "dark") return true;
+  if (mode === "light") return false;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+
+function applyTheme() {
+  var dark = wantsDark();
+  document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+  var meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute("content", dark ? "#1b2430" : "#FFF4E4");
+  try {
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: "sunny-theme", dark: dark }, window.location.origin);
+    }
+  } catch (err) {}
+}
+
 function renderGrown() {
   return (
     '<main class="screen" data-screen="grownups">' +
@@ -757,8 +795,19 @@ function renderGrown() {
     (!save.voice ? "true" : "false") +
     '">Off</button></div>' +
     "<p class=\"g-note\">On uses this tablet's own voice, even offline. Off keeps the room quiet. The words stay on the screen either way.</p>" +
+    "</section>" +
+    '<section class="g-sec"><h2 class="g-label">Appearance</h2><div class="chips">' +
+    themeChip("auto", "Auto") +
+    themeChip("light", "Light") +
+    themeChip("dark", "Dark") +
+    "</div>" +
+    '<p class="g-note">Auto follows this tablet. Light and Dark stay put.</p>' +
     "</section></div>" +
-    '<div class="grown-foot"><p class="coffee"><a href="https://buymeacoffee.com/wilsonsamiano" target="_blank" rel="noopener noreferrer">Buy me a coffee</a></p><button class="done" data-action="done">Done</button></div></main>'
+    '<div class="grown-foot">' +
+    (window.SUNNY_SINGLE
+      ? ""
+      : '<p class="g-note"><a href="sunny-abc.html" download="Sunny-ABC.html">Download the one-file page</a></p>') +
+    '<p class="coffee"><a href="https://buymeacoffee.com/wilsonsamiano" target="_blank" rel="noopener noreferrer">Buy me a coffee</a></p><button class="done" data-action="done">Done</button></div></main>'
   );
 }
 
@@ -866,26 +915,43 @@ function warmVoices() {
   } catch (err) {}
 }
 
+var spoken = null;
+
 function speak(text) {
-  if (!save.voice || !text || !window.speechSynthesis) return;
+  if (!save.voice || !text) return;
+  if (window.CLIPS && CLIPS[text]) {
+    if (spoken) {
+      try {
+        spoken.pause();
+      } catch (err) {}
+    }
+    var src = CLIPS[text];
+    if (src.indexOf("data:") !== 0) src = "voice/" + src;
+    spoken = new Audio(src);
+    spoken.volume = 1;
+    var play = spoken.play();
+    if (play && play.catch) play.catch(function () {});
+    return;
+  }
+  if (!window.speechSynthesis) return;
   try {
     var syn = window.speechSynthesis;
     var u = new SpeechSynthesisUtterance(text);
+    liveUtterance = u;
     u.rate = 0.86;
     u.pitch = 1.04;
     u.lang = "en-US";
+    u.volume = 1;
     var v = pickVoice(voices.length ? voices : syn.getVoices() || []);
-    if (v) u.voice = v;
-    if (syn.speaking || syn.pending) {
-      syn.cancel();
-      window.setTimeout(function () {
-        try {
-          syn.speak(u);
-        } catch (err) {}
-      }, 70);
-    } else {
-      syn.speak(u);
-    }
+    if (v && v.localService !== false) u.voice = v;
+    try {
+      syn.resume();
+    } catch (err) {}
+    if (syn.speaking || syn.pending) syn.cancel();
+    syn.speak(u);
+    try {
+      syn.resume();
+    } catch (err) {}
   } catch (err) {}
 }
 
@@ -1025,6 +1091,14 @@ function setNumberRange(id) {
   render();
 }
 
+function setTheme(mode) {
+  if (mode !== "light" && mode !== "dark" && mode !== "auto") return;
+  save.theme = mode;
+  persist();
+  applyTheme();
+  render();
+}
+
 function setVoice(on) {
   save.voice = on;
   persist();
@@ -1120,6 +1194,7 @@ function onClick(e) {
   else if (action === "letter-range") setLetterRange(btn.getAttribute("data-id"));
   else if (action === "number-range") setNumberRange(btn.getAttribute("data-id"));
   else if (action === "voice") setVoice(btn.getAttribute("data-value") === "on");
+  else if (action === "theme") setTheme(btn.getAttribute("data-value"));
 }
 
 function clearHold() {
@@ -1205,8 +1280,8 @@ function addArrow(group, path) {
   var poly = document.createElementNS(SVGNS, "polygon");
   poly.setAttribute("points", "-8,-7 12,0 -8,7");
   poly.setAttribute("transform", "translate(" + p.x + " " + p.y + ") rotate(" + ang + ")");
-  poly.setAttribute("fill", "#C94B3A");
-  poly.setAttribute("stroke", "#243044");
+  poly.setAttribute("fill", "var(--coral-deep)");
+  poly.setAttribute("stroke", "var(--ink)");
   poly.setAttribute("stroke-width", "1.5");
   poly.setAttribute("stroke-linejoin", "round");
   group.appendChild(poly);
@@ -1237,8 +1312,8 @@ function addStep(group, path, num, placed) {
   c.setAttribute("cx", x);
   c.setAttribute("cy", y);
   c.setAttribute("r", "12");
-  c.setAttribute("fill", "#F5B942");
-  c.setAttribute("stroke", "#243044");
+  c.setAttribute("fill", "var(--sun)");
+  c.setAttribute("stroke", "var(--ink)");
   c.setAttribute("stroke-width", "2");
   var t = document.createElementNS(SVGNS, "text");
   t.setAttribute("x", x);
@@ -1248,7 +1323,7 @@ function addStep(group, path, num, placed) {
   t.setAttribute("font-size", "15");
   t.setAttribute("font-weight", "700");
   t.setAttribute("font-family", "sans-serif");
-  t.setAttribute("fill", "#243044");
+  t.setAttribute("fill", "var(--ink)");
   t.textContent = String(num);
   group.appendChild(c);
   group.appendChild(t);
@@ -1257,11 +1332,13 @@ function addStep(group, path, num, placed) {
 function setupTrace() {
   var svg = document.querySelector(".trace-board");
   trace.drawing = false;
-  trace.points = [];
+  trace.pointerId = null;
+  trace.strokes = [];
   trace.samples = [];
   trace.done = [];
   trace.finished = false;
   trace.guides = null;
+  trace.ink = null;
   trace.line = null;
   if (!svg) return;
   var guides = svg.querySelectorAll("path.guide");
@@ -1270,7 +1347,7 @@ function setupTrace() {
   var placed = [];
   var i;
   trace.guides = guides;
-  trace.line = svg.querySelector(".draw-line");
+  trace.ink = svg.querySelector(".ink");
   for (i = 0; i < guides.length; i++) {
     trace.samples.push(samplePath(guides[i], 12));
     trace.done.push(false);
@@ -1280,13 +1357,35 @@ function setupTrace() {
   paintTraceGuides();
 }
 
+function tracePoints() {
+  var out = [];
+  var i;
+  var j;
+  for (i = 0; i < trace.strokes.length; i++) {
+    for (j = 0; j < trace.strokes[i].length; j++) out.push(trace.strokes[i][j]);
+  }
+  return out;
+}
+
+function beginStroke() {
+  var stroke = [];
+  var line = document.createElementNS(SVGNS, "polyline");
+  trace.strokes.push(stroke);
+  line.setAttribute("class", "draw-line");
+  line.setAttribute("points", "");
+  if (trace.ink) trace.ink.appendChild(line);
+  trace.line = line;
+  return stroke;
+}
+
 function paintLine() {
-  if (!trace.line) return;
+  if (!trace.line || !trace.strokes.length) return;
+  var pts = trace.strokes[trace.strokes.length - 1];
   var i;
   var s = "";
-  for (i = 0; i < trace.points.length; i++) {
+  for (i = 0; i < pts.length; i++) {
     if (i) s += " ";
-    s += Math.round(trace.points[i].x) + "," + Math.round(trace.points[i].y);
+    s += Math.round(pts[i].x) + "," + Math.round(pts[i].y);
   }
   trace.line.setAttribute("points", s);
 }
@@ -1296,11 +1395,11 @@ function traceProgress() {
   var i;
   var all = trace.samples.length > 0;
   for (i = 0; i < trace.samples.length; i++) {
-    if (!trace.done[i] && coverage(trace.samples[i], trace.points) >= TRACE_NEED) trace.done[i] = true;
+    if (!trace.done[i] && coverage(trace.samples[i], tracePoints()) >= TRACE_NEED) trace.done[i] = true;
     if (!trace.done[i]) all = false;
   }
   paintTraceGuides();
-  if (all && trace.points.length > 6) {
+  if (all && tracePoints().length > 6) {
     trace.finished = true;
     var note = document.querySelector(".feedback");
     if (note) note.textContent = "Yes! Nice tracing.";
@@ -1311,6 +1410,8 @@ function traceProgress() {
 
 function startDraw(e, svg) {
   if (e.button && e.button !== 0) return;
+  if (trace.drawing) endDraw();
+  beginStroke();
   trace.drawing = true;
   trace.pointerId = e.pointerId;
   trace.moved = false;
@@ -1324,16 +1425,20 @@ function startDraw(e, svg) {
 function addPoint(e, svg) {
   var p = localPoint(svg, e);
   if (!p) return;
-  var pts = trace.points;
+  if (!trace.strokes.length) beginStroke();
+  var pts = trace.strokes[trace.strokes.length - 1];
   if (pts.length) {
     var last = pts[pts.length - 1];
     var dx = p.x - last.x;
     var dy = p.y - last.y;
-    if (dx * dx + dy * dy < 4) return;
-    if (dx * dx + dy * dy > 16) trace.moved = true;
+    var dist = dx * dx + dy * dy;
+    if (dist < 4) return;
+    if (dist > 1600) {
+      pts = beginStroke();
+    } else if (dist > 16) trace.moved = true;
   }
   pts.push(p);
-  if (pts.length > 1500) pts.splice(0, 400);
+  if (tracePoints().length > 1500) trace.strokes.splice(0, 1);
   paintLine();
   if (pts.length % 3 === 0) traceProgress();
 }
@@ -1352,16 +1457,28 @@ function onDown(e) {
 
 function onMove(e) {
   if (!trace.drawing || e.pointerId !== trace.pointerId) return;
+  if (e.pointerType !== "touch" && !e.buttons) {
+    endDraw(e);
+    return;
+  }
   var svg = document.querySelector(".trace-board");
   if (!svg) return;
   if (e.preventDefault) e.preventDefault();
   addPoint(e, svg);
 }
 
-function onUp(e) {
-  clearHold();
-  if (!trace.drawing || e.pointerId !== trace.pointerId) return;
+function endDraw(e) {
+  if (!trace.drawing) return;
+  if (e && e.pointerId != null && trace.pointerId != null && e.pointerId !== trace.pointerId) return;
+  var svg = document.querySelector(".trace-board");
+  var id = trace.pointerId;
   trace.drawing = false;
+  trace.pointerId = null;
+  if (svg && id != null) {
+    try {
+      svg.releasePointerCapture(id);
+    } catch (err) {}
+  }
   if (trace.moved) {
     trace.blockClick = true;
     window.setTimeout(function () {
@@ -1369,6 +1486,11 @@ function onUp(e) {
     }, 350);
   }
   traceProgress();
+}
+
+function onUp(e) {
+  clearHold();
+  endDraw(e);
 }
 
 function onKey(e) {
@@ -1386,6 +1508,7 @@ function onKey(e) {
 }
 
 function registerWorker() {
+  if (window.SUNNY_SINGLE) return;
   if (!("serviceWorker" in navigator)) return;
   var host = location.hostname;
   if (location.protocol.indexOf("http") !== 0) return;
@@ -1400,6 +1523,9 @@ function init() {
   app.addEventListener("pointermove", onMove);
   document.addEventListener("pointerup", onUp);
   document.addEventListener("pointercancel", onUp);
+  document.addEventListener("lostpointercapture", onUp);
+  document.addEventListener("touchend", onUp, { passive: true });
+  document.addEventListener("touchcancel", onUp, { passive: true });
   document.addEventListener("contextmenu", function (e) {
     e.preventDefault();
   });
@@ -1411,6 +1537,13 @@ function init() {
     } catch (err) {}
   });
   warmVoices();
+  applyTheme();
+  var themeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  if (themeQuery.addEventListener) {
+    themeQuery.addEventListener("change", function () {
+      if ((save.theme || "auto") === "auto") applyTheme();
+    });
+  }
   registerWorker();
   render();
 }

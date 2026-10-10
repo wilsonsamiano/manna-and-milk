@@ -1,6 +1,8 @@
 :root {
   --paper: #fff4e4;
+  --card: #fff;
   --ink: #243044;
+  --edge: #243044;
   --sun: #f5b942;
   --coral: #e36b58;
   --coral-deep: #c94b3a;
@@ -9,6 +11,18 @@
   --sun-deep: #c4842a;
   --line: #e7d3bc;
   color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  --paper: #1b2430;
+  --card: #2a3546;
+  --ink: #fff6e8;
+  --edge: #0c121a;
+  --coral-deep: #ff8d7a;
+  --leaf: #8dcc95;
+  --line: #6d7d92;
+  --sun-deep: #f0c36a;
+  color-scheme: dark;
 }
 
 *,
@@ -47,11 +61,11 @@ p {
 button {
   font: inherit;
   color: inherit;
-  background: #fff;
+  background: var(--card);
   border: 3px solid var(--ink);
   border-radius: 22px;
   padding: 8px;
-  box-shadow: 0 4px 0 var(--ink);
+  box-shadow: 0 4px 0 var(--edge);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -61,7 +75,7 @@ button {
 
 button:active {
   transform: translateY(2px);
-  box-shadow: 0 2px 0 var(--ink);
+  box-shadow: 0 2px 0 var(--edge);
 }
 
 button:focus {
@@ -169,7 +183,7 @@ button:focus-visible {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: #fff;
+  background: var(--card);
   gap: 0;
 }
 
@@ -281,7 +295,7 @@ button:focus-visible {
 .pic-card {
   width: min(64vw, 240px);
   height: min(64vw, 240px);
-  background: #fff;
+  background: var(--card);
   display: grid;
   place-items: center;
   padding: 12px;
@@ -339,7 +353,7 @@ button:focus-visible {
   flex-direction: column;
   gap: 4px;
   padding: 8px 4px;
-  background: #fff;
+  background: var(--card);
 }
 
 .choice .pic {
@@ -381,16 +395,16 @@ button:focus-visible {
   padding: 8px 18px;
   font-size: 18px;
   font-weight: 800;
-  background: #fff;
+  background: var(--card);
 }
 
 .trace-card {
   width: min(100%, 420px);
   height: min(58vh, 460px);
-  background: #fff;
+  background: var(--card);
   border: 3px solid var(--ink);
   border-radius: 28px;
-  box-shadow: 0 4px 0 var(--ink);
+  box-shadow: 0 4px 0 var(--edge);
   padding: 6px;
 }
 
@@ -461,8 +475,8 @@ button.dot {
   border-radius: 50%;
   padding: 0;
   border: 3px solid var(--ink);
-  background: #fff;
-  box-shadow: 0 3px 0 var(--ink);
+  background: var(--card);
+  box-shadow: 0 3px 0 var(--edge);
 }
 
 .dot-lg,
@@ -491,7 +505,7 @@ button.dot.on {
   align-items: center;
   gap: 8px;
   padding: 0 12px 0 8px;
-  background: #fff;
+  background: var(--card);
 }
 
 .ten-sm {
@@ -503,7 +517,7 @@ button.dot.on {
   height: 26px;
   border-radius: 13px;
   border: 2px solid var(--ink);
-  background-color: #fff;
+  background-color: var(--card);
   background-image: radial-gradient(circle, var(--ink) 4px, transparent 5px);
   background-size: 10% 100%;
   background-repeat: repeat-x;
@@ -568,7 +582,7 @@ button.dot.on {
   flex-direction: column;
   gap: 2px;
   padding: 6px 2px;
-  background: #fff;
+  background: var(--card);
 }
 
 .mode-btn.on {
@@ -617,7 +631,7 @@ button.dot.on {
   font-size: 20px;
   font-weight: 800;
   padding: 8px 12px;
-  background: #fff;
+  background: var(--card);
 }
 
 .chip.on {

@@ -20,9 +20,19 @@ Sideload only. Not on the Play Store.
 
 Works on Android and Fire tablets. The voice is the tablet’s own text-to-speech. If a device has no voice, the words stay on screen.
 
+## One-file page
+
+**Sunny-ABC.html** on [Releases](https://github.com/wilsonsamiano/sunny-abc/releases/tag/v0.1.0-beta) is the whole game in a single HTML file. Spoken words are inside the file. No extra folders.
+
+1. Download **Sunny-ABC.html**.
+2. Open it in Silk or Chrome on the tablet.
+3. It plays with the network off. Hold the sun for grown-ups (ranges, sound, light or dark).
+
+The same file is `sunny-abc.html` in this repo. `www/` is the split version (page, script, and voice clips) used by the APK.
+
 ## Play in a browser
 
-The game is the `www/` folder. It is a tiny offline-capable page: `index.html`, `app.css`, `app.js`. GitHub Pages, when enabled, serves that folder.
+The game is the `www/` folder: `index.html`, `app.css`, `app.js`, and the voice clips. It works offline after the first load.
 
 ## Build the APK
 
@@ -42,7 +52,8 @@ The signed beta APK is attached to the [v0.1.0-beta release](https://github.com/
 
 ## Layout
 
-- `www/` — the game (HTML, CSS, vanilla JavaScript)
+- `sunny-abc.html` — the same game as one file
+- `www/` — the game (HTML, CSS, vanilla JavaScript, voice clips)
 - `app/` — Android WebView shell that bundles `www/` so the tablet does not need a network
 
 ## License
