@@ -293,6 +293,21 @@ button:focus-visible {
   display: block;
 }
 
+.word-mark {
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.word-big {
+  display: block;
+  text-align: center;
+  font-size: clamp(48px, 10vw, 92px);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
 .color-name {
   margin: 0 0 8px;
   text-align: center;

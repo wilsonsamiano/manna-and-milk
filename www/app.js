@@ -69,6 +69,16 @@ var COLORS = [
   colorItem("brown", "#8A5A32"),
 ];
 
+var WORD_RANGES = [{ id: "all", label: "First words", from: 0, to: 4 }];
+
+var WORDS = [
+  { name: "Milk", pic: "milk", say: "Milk.", find: "Find milk." },
+  { name: "Dog", pic: "dog", say: "Dog.", find: "Find dog." },
+  { name: "God", pic: "god", say: "God.", find: "Find God." },
+  { name: "Momma", pic: "momma", say: "Momma.", find: "Find momma." },
+  { name: "Dadda", pic: "dadda", say: "Dadda.", find: "Find dadda." },
+];
+
 var ONES = [
   "zero",
   "one",
@@ -240,6 +250,8 @@ function defaults() {
     colorRange: "all",
     shapeIndex: 0,
     colorIndex: 0,
+    wordRange: "all",
+    wordIndex: 0,
     pin: "",
     introDone: false,
     seenNotes: "",
@@ -264,6 +276,8 @@ function loadSave() {
         if (typeof p.numberIndex === "number") d.numberIndex = p.numberIndex | 0;
         if (typeof p.shapeIndex === "number") d.shapeIndex = p.shapeIndex | 0;
         if (typeof p.colorIndex === "number") d.colorIndex = p.colorIndex | 0;
+        if (rangeById(WORD_RANGES, p.wordRange)) d.wordRange = p.wordRange;
+        if (typeof p.wordIndex === "number") d.wordIndex = p.wordIndex | 0;
         if (p.letterForm === "big" || p.letterForm === "small" || p.letterForm === "both") d.letterForm = p.letterForm;
         if (/^\d{4}$/.test(p.pin || "")) d.pin = p.pin;
         if (p.introDone === true) d.introDone = true;
@@ -279,6 +293,8 @@ function loadSave() {
   if (d.shapeIndex < sr.from || d.shapeIndex > sr.to) d.shapeIndex = sr.from;
   var cr = rangeById(COLOR_RANGES, d.colorRange);
   if (d.colorIndex < cr.from || d.colorIndex > cr.to) d.colorIndex = cr.from;
+  var wr = rangeById(WORD_RANGES, d.wordRange);
+  if (d.wordIndex < wr.from || d.wordIndex > wr.to) d.wordIndex = wr.from;
   try {
     localStorage.setItem(KEY, JSON.stringify(d));
   } catch (err) {}
@@ -332,6 +348,16 @@ function currentColor() {
   var r = currentColorRange();
   if (save.colorIndex < r.from || save.colorIndex > r.to) save.colorIndex = r.from;
   return COLORS[save.colorIndex];
+}
+
+function currentWordRange() {
+  return rangeById(WORD_RANGES, save.wordRange) || WORD_RANGES[0];
+}
+
+function currentWord() {
+  var r = currentWordRange();
+  if (save.wordIndex < r.from || save.wordIndex > r.to) save.wordIndex = r.from;
+  return WORDS[save.wordIndex];
 }
 
 function currentLetter() {
@@ -562,6 +588,7 @@ function lessonNoun() {
   if (ui.screen === "numbers") return "number";
   if (ui.screen === "shapes") return "shape";
   if (ui.screen === "colors") return "color";
+  if (ui.screen === "words") return "word";
   return "letter";
 }
 
@@ -570,7 +597,8 @@ function challengeOn() {
     (ui.screen === "letters" && (ui.mode === "find" || ui.mode === "trace")) ||
     (ui.screen === "numbers" && (ui.mode === "find" || ui.mode === "count")) ||
     (ui.screen === "shapes" && (ui.mode === "find" || ui.mode === "trace")) ||
-    (ui.screen === "colors" && ui.mode === "find")
+    (ui.screen === "colors" && ui.mode === "find") ||
+    (ui.screen === "words" && ui.mode === "find")
   );
 }
 
@@ -666,6 +694,7 @@ function renderHome() {
     shapeSvg(SHAPES[2], "pick-shape") +
     '<span class="pick-label">Shapes</span></button>' +
     '<button class="pick-card" data-action="colors"><span class="pick-dots"><i style="background:#E23B3B"></i><i style="background:#3B6FE2"></i><i style="background:#F0C429"></i></span><span class="pick-label">Colors</span></button>' +
+    '<button class="pick-card" data-action="words"><span class="word-mark">Milk</span><span class="pick-label">Words</span></button>' +
     "</div></div>" +
     '<p class="hint">Now: ' +
     lr.label +
@@ -675,6 +704,7 @@ function renderHome() {
     sr.label +
     " · " +
     cr.label +
+    " · Words" +
     "<br>Hold the sun for grown-ups</p>" +
     updateHomeNote() +
     "</main>"
@@ -893,7 +923,7 @@ function renderGrown() {
     '<main class="screen" data-screen="grownups">' +
     header(true) +
     '<div class="grown-body"><h1 class="g-title">For grown-ups</h1>' +
-    "<p class=\"g-note\">Letters, numbers, shapes, and colors are the lessons so far. More will be added. All letters are on to start. Nothing is timed, and there is no score.</p>" +
+    "<p class=\"g-note\">Letters, numbers, shapes, colors, and first words are the lessons so far. More will be added. All letters are on to start. Nothing is timed, and there is no score.</p>" +
     '<div class="chips"><button class="chip" data-action="show-intro">Show the tour</button></div>' +
     '<section class="g-sec"><h2 class="g-label">Letters</h2><div class="chips">' +
     chips(LETTER_RANGES, save.letterRange, "letter-range") +
@@ -918,6 +948,7 @@ function renderGrown() {
     '<section class="g-sec"><h2 class="g-label">Colors</h2><div class="chips">' +
     chips(COLOR_RANGES, save.colorRange, "color-range") +
     "</div></section>" +
+    '<section class="g-sec"><h2 class="g-label">Words</h2><p class="g-note">Milk, Dog, God, Momma, and Dadda. She hears the word, then finds the picture.</p></section>' +
     '<section class="g-sec"><h2 class="g-label">Sound</h2><div class="chips">' +
     '<button class="chip' +
     (save.voice ? " on" : "") +
@@ -1020,6 +1051,59 @@ function renderColorLook(color) {
   );
 }
 
+function renderWordLook(word) {
+  return (
+    '<div class="stage"><div class="look"><button class="letter-hit" data-action="hear" aria-label="Hear ' +
+    word.name +
+    '"><span class="word-big">' +
+    word.name +
+    '</span><span class="sound">' +
+    speakerIcon() +
+    ' hear it</span></button><button class="pic-card" data-action="hear" aria-label="' +
+    word.name +
+    '">' +
+    pic(word.pic) +
+    "</button></div></div>"
+  );
+}
+
+function renderWordFind(word) {
+  var html = "";
+  var i;
+  for (i = 0; i < ui.choices.length; i++) {
+    var id = ui.choices[i];
+    var choice = WORDS[id];
+    var cls = "choice";
+    if (ui.findSolved && id === save.wordIndex) cls += " is-right";
+    else if (ui.findSolved) cls += " is-dim";
+    if (ui.nudge === String(id)) cls += " nudge";
+    html +=
+      '<button class="' +
+      cls +
+      '" data-action="pick" data-id="' +
+      id +
+      '" aria-label="' +
+      choice.name +
+      '">' +
+      pic(choice.pic) +
+      '<span class="choice-word">' +
+      choice.name +
+      "</span></button>";
+  }
+  var feedback = ui.findSolved ? "Yes! " + word.name : ui.saidWrong ? "Let's look again" : "";
+  return (
+    '<div class="stage"><div class="find"><p class="prompt">Find</p><p class="word-big">' +
+    word.name +
+    '</p><div class="choices">' +
+    html +
+    '</div><p class="feedback" role="status">' +
+    feedback +
+    "</p>" +
+    againBtn() +
+    "</div></div>"
+  );
+}
+
 function renderColorFind(color) {
   var html = "";
   var i;
@@ -1099,6 +1183,14 @@ function renderPlay() {
     ];
     if (ui.mode === "find") stage = renderColorFind(color);
     else stage = renderColorLook(color);
+  } else if (ui.screen === "words") {
+    var word = currentWord();
+    modes = [
+      { id: "look", label: "Look", icon: modeIcon("look") },
+      { id: "find", label: "Find", icon: modeIcon("find") },
+    ];
+    if (ui.mode === "find") stage = renderWordFind(word);
+    else stage = renderWordLook(word);
   }
   var guard = challengeOn() && !challengeDone() ? " boxes" : "";
   return (
@@ -1121,6 +1213,7 @@ function activityKey() {
   if (ui.screen === "numbers") return "N:" + ui.mode + ":" + save.numberIndex + ":" + save.numberRange;
   if (ui.screen === "shapes") return "S:" + ui.mode + ":" + save.shapeIndex + ":" + save.shapeRange;
   if (ui.screen === "colors") return "C:" + ui.mode + ":" + save.colorIndex + ":" + save.colorRange;
+  if (ui.screen === "words") return "W:" + ui.mode + ":" + save.wordIndex + ":" + save.wordRange;
   return "";
 }
 
@@ -1140,6 +1233,7 @@ function ensureActivity() {
   if (ui.screen === "numbers" && ui.mode === "find") ui.choices = makeNumberChoices(save.numberIndex);
   if (ui.screen === "shapes" && ui.mode === "find") ui.choices = makeIndexChoices(save.shapeIndex, SHAPES, currentShapeRange());
   if (ui.screen === "colors" && ui.mode === "find") ui.choices = makeIndexChoices(save.colorIndex, COLORS, currentColorRange());
+  if (ui.screen === "words" && ui.mode === "find") ui.choices = makeIndexChoices(save.wordIndex, WORDS, currentWordRange());
 }
 
 function setTitle() {
@@ -1148,6 +1242,7 @@ function setTitle() {
   else if (ui.screen === "numbers") t = "Manna & Milk · " + currentNumber();
   else if (ui.screen === "shapes") t = "Manna & Milk · " + currentShape().name;
   else if (ui.screen === "colors") t = "Manna & Milk · " + currentColor().name;
+  else if (ui.screen === "words") t = "Manna & Milk · " + currentWord().name;
   else if (ui.screen === "grownups") t = "Manna & Milk · Grown-ups";
   else if (ui.screen === "pin") t = "Manna & Milk · PIN";
   else if (ui.screen === "intro") t = "Manna & Milk · For grown-ups";
@@ -1315,6 +1410,7 @@ function scheduleAdvance() {
   var number = save.numberIndex;
   var shape = save.shapeIndex;
   var color = save.colorIndex;
+  var word = save.wordIndex;
   advanceTimer = window.setTimeout(function () {
     advanceTimer = 0;
     if (ui.screen !== screen || ui.mode !== mode) return;
@@ -1323,6 +1419,7 @@ function scheduleAdvance() {
     if (screen === "numbers" && save.numberIndex !== number) return;
     if (screen === "shapes" && save.shapeIndex !== shape) return;
     if (screen === "colors" && save.colorIndex !== color) return;
+    if (screen === "words" && save.wordIndex !== word) return;
     if (mode === "find" && !ui.findSolved) return;
     if (mode === "count" && !ui.countDone) return;
     if (mode === "trace" && !trace.finished) return;
@@ -1352,7 +1449,7 @@ function speak(text, onDone) {
       } catch (err) {}
     }
     var src = CLIPS[text];
-    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=14";
+    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=15";
     spoken = new Audio(src);
     spoken.volume = 1;
     spoken.preload = "auto";
@@ -1412,6 +1509,10 @@ function speakCurrent() {
     var color = currentColor();
     if (ui.mode === "find") speak(color.find);
     else speak(color.say);
+  } else if (ui.screen === "words") {
+    var word = currentWord();
+    if (ui.mode === "find") speak(word.find);
+    else speak(word.say);
   }
 }
 
@@ -1448,6 +1549,14 @@ function goShapes() {
 
 function goColors() {
   ui.screen = "colors";
+  ui.mode = "look";
+  ui.choiceKey = "";
+  render();
+  speakCurrent();
+}
+
+function goWords() {
+  ui.screen = "words";
   ui.mode = "look";
   ui.choiceKey = "";
   render();
@@ -1493,6 +1602,12 @@ function step(dir) {
     if (c > cr.to) c = cr.from;
     if (c < cr.from) c = cr.to;
     save.colorIndex = c;
+  } else if (ui.screen === "words") {
+    var wr = currentWordRange();
+    var w = save.wordIndex + dir;
+    if (w > wr.to) w = wr.from;
+    if (w < wr.from) w = wr.to;
+    save.wordIndex = w;
   } else return;
   persist();
   ui.choiceKey = "";
@@ -1597,6 +1712,7 @@ function onPick(raw) {
   if (ui.screen === "numbers") correct = save.numberIndex;
   else if (ui.screen === "shapes") correct = save.shapeIndex;
   else if (ui.screen === "colors") correct = save.colorIndex;
+  else if (ui.screen === "words") correct = save.wordIndex;
   if (ui.findSolved) {
     if (id === correct) speakCurrent();
     return;
@@ -1661,7 +1777,7 @@ function onOne(raw) {
 
 function findLive() {
   if (ui.mode !== "find" || challengeDone()) return false;
-  return ui.screen === "letters" || ui.screen === "numbers" || ui.screen === "shapes" || ui.screen === "colors";
+  return ui.screen === "letters" || ui.screen === "numbers" || ui.screen === "shapes" || ui.screen === "colors" || ui.screen === "words";
 }
 
 function findResting(e) {
@@ -1849,7 +1965,7 @@ function isPalm(e) {
 var palmIds = {};
 
 function kidScreen() {
-  return ui.screen === "home" || ui.screen === "letters" || ui.screen === "numbers" || ui.screen === "shapes" || ui.screen === "colors";
+  return ui.screen === "home" || ui.screen === "letters" || ui.screen === "numbers" || ui.screen === "shapes" || ui.screen === "colors" || ui.screen === "words";
 }
 
 function palmBlocked(e) {
@@ -1883,6 +1999,7 @@ function onClick(e) {
   else if (action === "numbers") goNumbers();
   else if (action === "shapes") goShapes();
   else if (action === "colors") goColors();
+  else if (action === "words") goWords();
   else if (action === "done") onDone();
   else if (action === "next") {
     if (!nextLocked()) step(1);
