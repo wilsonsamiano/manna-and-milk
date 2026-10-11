@@ -903,12 +903,14 @@ function speak(text) {
     if (spoken) {
       try {
         spoken.pause();
+        spoken.currentTime = 0;
       } catch (err) {}
     }
     var src = CLIPS[text];
-    if (src.indexOf("data:") !== 0) src = "voice/" + src;
+    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=7";
     spoken = new Audio(src);
     spoken.volume = 1;
+    spoken.preload = "auto";
     var play = spoken.play();
     if (play && play.catch) play.catch(function () {});
     return;

@@ -228,8 +228,10 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 0 8px;
+  gap: 8px;
+  padding: 0 8px 4px;
   min-width: 140px;
+  max-width: 100%;
 }
 
 .letter-hit:active {
@@ -242,19 +244,19 @@ button:focus-visible {
   align-items: flex-end;
   justify-content: center;
   gap: 10px;
+  padding-bottom: 0.16em;
 }
 
 .upper {
-  font-size: 120px;
-  font-size: clamp(104px, 22vw, 210px);
+  font-size: clamp(92px, 18vw, 168px);
   font-weight: 800;
-  line-height: 0.82;
+  line-height: 0.95;
 }
 
 .lower {
-  font-size: clamp(64px, 12vw, 120px);
+  font-size: clamp(56px, 10vw, 104px);
   font-weight: 800;
-  line-height: 0.82;
+  line-height: 1.05;
   color: var(--coral-deep);
 }
 
@@ -269,8 +271,9 @@ button:focus-visible {
 .word {
   font-size: clamp(28px, 5vw, 44px);
   font-weight: 800;
-  line-height: 1.1;
+  line-height: 1.15;
   text-align: center;
+  margin-top: 2px;
 }
 
 .word-first {
@@ -311,11 +314,11 @@ button:focus-visible {
 }
 
 .num {
-  font-size: 120px;
-  font-size: clamp(88px, 18vw, 200px);
+  font-size: clamp(80px, 16vw, 168px);
   font-weight: 800;
-  line-height: 0.85;
+  line-height: 1;
   letter-spacing: -0.03em;
+  padding-bottom: 0.06em;
 }
 
 .pick-card .num {

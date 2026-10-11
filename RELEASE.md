@@ -1,12 +1,10 @@
-Sunny ABC 0.1.3, still a published beta.
+Sunny ABC 0.1.4, still a published beta.
 
 What changed:
-- The installed app looks for a newer copy and downloads it.
-- Update installs over this one. You do not uninstall first.
-- Android still asks you to tap Update. Hold the sun, then Install update, if you skipped the prompt.
+- Spoken words start a moment later, so the tablet does not clip the first sound.
+- The voice is a little slower, so words do not run together.
+- Letters sit above the word instead of covering it.
 
-Download **sunny-abc-beta.apk** one last time by hand if you are still on 0.1.2. After this copy is installed, the next one can update itself. Same signing key, so it replaces 0.1.2. Not on the Play Store.
-
-**Sunny-ABC.html** is the whole game in one file.
+It installs over 0.1.3. You do not uninstall first. If the app already offered an update, tap Update. Or hold the sun and tap Install update.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)
