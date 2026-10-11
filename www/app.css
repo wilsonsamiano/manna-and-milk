@@ -205,9 +205,9 @@ button:focus-visible {
   min-height: 0;
   overflow: auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 4px 12px 8px;
+  padding: 8px 12px;
 }
 
 .look,
@@ -219,6 +219,8 @@ button:focus-visible {
   flex-direction: column;
   align-items: center;
   gap: 8px;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .letter-hit {
@@ -244,7 +246,8 @@ button:focus-visible {
   align-items: flex-end;
   justify-content: center;
   gap: 10px;
-  padding-bottom: 0.16em;
+  padding-top: 0.08em;
+  padding-bottom: 0.12em;
 }
 
 .upper {
@@ -267,7 +270,7 @@ button:focus-visible {
 .pair.both .upper,
 .pair.both .lower {
   font-size: clamp(64px, 13vw, 132px);
-  line-height: 0.92;
+  line-height: 1.05;
 }
 
 .pair.both.pair-card .upper,
@@ -739,16 +742,19 @@ button.qty-ten.on {
 }
 
 @media (max-height: 560px) {
-  .upper {
-    font-size: 84px;
+  .upper,
+  .pair.both .upper,
+  .pair.both .lower {
+    font-size: clamp(44px, 28vh, 84px);
+    line-height: 1.05;
   }
 
   .lower {
-    font-size: 48px;
+    font-size: clamp(36px, 22vh, 64px);
   }
 
   .num {
-    font-size: 84px;
+    font-size: clamp(44px, 28vh, 84px);
   }
 
   .icon-btn {
@@ -785,10 +791,30 @@ button.qty-ten.on {
   }
 }
 
-@media (max-height: 560px) and (min-width: 700px) {
-  .look {
-    flex-direction: row;
-    gap: 16px;
+@media (orientation: landscape) {
+  .upper,
+  .pair.both .upper,
+  .pair.both .lower,
+  .num {
+    font-size: clamp(48px, 24vh, 120px);
+    line-height: 1.08;
+  }
+
+  .lower {
+    font-size: clamp(40px, 18vh, 88px);
+  }
+
+  .pic-card {
+    width: min(32vh, 200px);
+    height: min(32vh, 200px);
+  }
+
+  .word {
+    font-size: clamp(22px, 4vh, 36px);
+  }
+
+  .prompt-ch {
+    font-size: 1.15em;
   }
 }
 
