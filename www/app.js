@@ -25,6 +25,50 @@ var NUMBER_RANGES = [
   { id: "71-100", label: "71 to 100", from: 71, to: 100 },
 ];
 
+var SHAPE_RANGES = [
+  { id: "all", label: "All shapes", from: 0, to: 7 },
+  { id: "first", label: "Circle to rectangle", from: 0, to: 3 },
+  { id: "last", label: "Star to diamond", from: 4, to: 7 },
+];
+
+var COLOR_RANGES = [
+  { id: "all", label: "All colors", from: 0, to: 7 },
+  { id: "first", label: "Red to green", from: 0, to: 3 },
+  { id: "last", label: "Orange to brown", from: 4, to: 7 },
+];
+
+function shapeItem(name, d) {
+  var say = name.charAt(0).toUpperCase() + name.slice(1) + ".";
+  return { name: name, say: say, find: "Find the " + name + ".", trace: "Trace the " + name + ".", d: d, strokes: [d] };
+}
+
+var SHAPES = [
+  shapeItem("circle", "M100 40 C150 40 168 72 168 110 C168 156 148 184 100 184 C52 184 32 156 32 110 C32 72 50 40 100 40"),
+  shapeItem("square", "M48 46 H152 V150 H48 Z"),
+  shapeItem("triangle", "M100 38 L168 168 L32 168 Z"),
+  shapeItem("rectangle", "M28 62 H172 V150 H28 Z"),
+  shapeItem("star", "M100 30 L118 86 L176 86 L130 120 L148 176 L100 144 L52 176 L70 120 L24 86 L82 86 Z"),
+  shapeItem("heart", "M100 172 C46 128 30 86 58 64 C78 48 98 62 100 78 C102 62 122 48 142 64 C170 86 154 128 100 172"),
+  shapeItem("oval", "M100 48 C156 48 176 78 176 110 C176 150 156 176 100 176 C44 176 24 150 24 110 C24 78 44 48 100 48"),
+  shapeItem("diamond", "M100 32 L170 110 L100 188 L30 110 Z"),
+];
+
+function colorItem(name, hex) {
+  var say = name.charAt(0).toUpperCase() + name.slice(1) + ".";
+  return { name: name, hex: hex, say: say, find: "Find " + name + "." };
+}
+
+var COLORS = [
+  colorItem("red", "#E23B3B"),
+  colorItem("blue", "#3B6FE2"),
+  colorItem("yellow", "#F0C429"),
+  colorItem("green", "#3EAA5A"),
+  colorItem("orange", "#F08A2A"),
+  colorItem("purple", "#8A4FD0"),
+  colorItem("pink", "#F08AB0"),
+  colorItem("brown", "#8A5A32"),
+];
+
 var ONES = [
   "zero",
   "one",
@@ -192,6 +236,10 @@ function defaults() {
     letterIndex: 0,
     numberIndex: 1,
     letterForm: "both",
+    shapeRange: "all",
+    colorRange: "all",
+    shapeIndex: 0,
+    colorIndex: 0,
     pin: "",
     introDone: false,
     seenNotes: "",
@@ -210,8 +258,12 @@ function loadSave() {
         if (rangeById(LETTER_RANGES, p.letterRange)) d.letterRange = p.letterRange;
         if ((p.v || 1) < 2 && d.letterRange === "A-E") d.letterRange = "A-Z";
         if (rangeById(NUMBER_RANGES, p.numberRange)) d.numberRange = p.numberRange;
+        if (rangeById(SHAPE_RANGES, p.shapeRange)) d.shapeRange = p.shapeRange;
+        if (rangeById(COLOR_RANGES, p.colorRange)) d.colorRange = p.colorRange;
         if (typeof p.letterIndex === "number") d.letterIndex = p.letterIndex | 0;
         if (typeof p.numberIndex === "number") d.numberIndex = p.numberIndex | 0;
+        if (typeof p.shapeIndex === "number") d.shapeIndex = p.shapeIndex | 0;
+        if (typeof p.colorIndex === "number") d.colorIndex = p.colorIndex | 0;
         if (p.letterForm === "big" || p.letterForm === "small" || p.letterForm === "both") d.letterForm = p.letterForm;
         if (/^\d{4}$/.test(p.pin || "")) d.pin = p.pin;
         if (p.introDone === true) d.introDone = true;
@@ -223,6 +275,10 @@ function loadSave() {
   if (d.letterIndex < lr.from || d.letterIndex > lr.to) d.letterIndex = lr.from;
   var nr = rangeById(NUMBER_RANGES, d.numberRange);
   if (d.numberIndex < nr.from || d.numberIndex > nr.to) d.numberIndex = nr.from;
+  var sr = rangeById(SHAPE_RANGES, d.shapeRange);
+  if (d.shapeIndex < sr.from || d.shapeIndex > sr.to) d.shapeIndex = sr.from;
+  var cr = rangeById(COLOR_RANGES, d.colorRange);
+  if (d.colorIndex < cr.from || d.colorIndex > cr.to) d.colorIndex = cr.from;
   try {
     localStorage.setItem(KEY, JSON.stringify(d));
   } catch (err) {}
@@ -249,6 +305,26 @@ function currentLetterRange() {
 
 function currentNumberRange() {
   return rangeById(NUMBER_RANGES, save.numberRange) || NUMBER_RANGES[1];
+}
+
+function currentShapeRange() {
+  return rangeById(SHAPE_RANGES, save.shapeRange) || SHAPE_RANGES[0];
+}
+
+function currentColorRange() {
+  return rangeById(COLOR_RANGES, save.colorRange) || COLOR_RANGES[0];
+}
+
+function currentShape() {
+  var r = currentShapeRange();
+  if (save.shapeIndex < r.from || save.shapeIndex > r.to) save.shapeIndex = r.from;
+  return SHAPES[save.shapeIndex];
+}
+
+function currentColor() {
+  var r = currentColorRange();
+  if (save.colorIndex < r.from || save.colorIndex > r.to) save.colorIndex = r.from;
+  return COLORS[save.colorIndex];
 }
 
 function currentLetter() {
@@ -337,6 +413,25 @@ function makeNumberChoices(n) {
   });
   var near = shuffle(pool.slice(0, Math.min(6, pool.length)));
   return shuffle([n, near[0], near[1]]);
+}
+
+function makeIndexChoices(index, list, range) {
+  var pool = [];
+  var i;
+  for (i = range.from; i <= range.to; i++) if (i !== index) pool.push(i);
+  if (pool.length < 2) {
+    for (i = 0; i < list.length; i++) if (i !== index && pool.indexOf(i) === -1) pool.push(i);
+  }
+  pool = shuffle(pool);
+  return shuffle([index, pool[0], pool[1]]);
+}
+
+function shapeSvg(shape, cls) {
+  return '<svg class="shape-art ' + cls + '" viewBox="0 0 200 220" aria-hidden="true"><path d="' + shape.d + '"></path></svg>';
+}
+
+function swatchHtml(color, cls) {
+  return '<span class="swatch ' + cls + '" style="background:' + color.hex + '"></span>';
 }
 
 function picSrc(word) {
@@ -437,8 +532,8 @@ function nav(modes) {
       m.label +
       "</span></button>";
   }
-  var nextLabel = ui.screen === "numbers" ? "Next number" : "Next letter";
-  var prevLabel = ui.screen === "numbers" ? "Previous number" : "Previous letter";
+  var nextLabel = "Next " + lessonNoun();
+  var prevLabel = "Previous " + lessonNoun();
   var prevLocked = challengeLocked("prev");
   var nextOff = nextLocked();
   return (
@@ -460,10 +555,19 @@ function nav(modes) {
   );
 }
 
+function lessonNoun() {
+  if (ui.screen === "numbers") return "number";
+  if (ui.screen === "shapes") return "shape";
+  if (ui.screen === "colors") return "color";
+  return "letter";
+}
+
 function challengeOn() {
   return (
     (ui.screen === "letters" && (ui.mode === "find" || ui.mode === "trace")) ||
-    (ui.screen === "numbers" && (ui.mode === "find" || ui.mode === "count"))
+    (ui.screen === "numbers" && (ui.mode === "find" || ui.mode === "count")) ||
+    (ui.screen === "shapes" && (ui.mode === "find" || ui.mode === "trace")) ||
+    (ui.screen === "colors" && ui.mode === "find")
   );
 }
 
@@ -547,17 +651,27 @@ function quantityHtml(n, interactive) {
 function renderHome() {
   var lr = currentLetterRange();
   var nr = currentNumberRange();
+  var sr = currentShapeRange();
+  var cr = currentColorRange();
   return (
     '<main class="screen boxes" data-screen="home">' +
     header(false) +
     '<div class="home-main"><img class="mark" alt="" src="mark.jpg"><h1 class="brand">Manna & Milk</h1><p class="lede">Little lessons</p><div class="pick">' +
     '<button class="pick-card" data-action="letters"><span class="pair pair-card"><span class="upper">A</span><span class="lower">a</span></span><span class="pick-label">Letters</span></button>' +
     '<button class="pick-card" data-action="numbers"><span class="num">123</span><span class="pick-label">Numbers</span></button>' +
+    '<button class="pick-card" data-action="shapes">' +
+    shapeSvg(SHAPES[2], "pick-shape") +
+    '<span class="pick-label">Shapes</span></button>' +
+    '<button class="pick-card" data-action="colors"><span class="pick-dots"><i style="background:#E23B3B"></i><i style="background:#3B6FE2"></i><i style="background:#F0C429"></i></span><span class="pick-label">Colors</span></button>' +
     "</div></div>" +
     '<p class="hint">Now: ' +
     lr.label +
     " · " +
     nr.label +
+    "<br>" +
+    sr.label +
+    " · " +
+    cr.label +
     "<br>Hold the sun for grown-ups</p>" +
     updateHomeNote() +
     "</main>"
@@ -627,16 +741,17 @@ function renderLetterFind(item) {
 function renderTrace(item) {
   var paths = "";
   var i;
-  var small = tracingSmall();
+  var small = item.shape ? false : tracingSmall();
   var strokes = small ? smallStrokes(item) : item.strokes;
   var glyph = small ? item.lower : item.ch;
+  var title = item.shape ? "Trace the " + item.ch : 'Trace <span class="prompt-ch">' + glyph + "</span>";
   for (i = 0; i < strokes.length; i++) {
     paths += '<path class="guide" d="' + strokes[i] + '"></path>';
   }
   return (
-    '<div class="stage"><div class="trace-wrap"><p class="prompt">Trace <span class="prompt-ch">' +
-    glyph +
-    '</span></p><div class="trace-card"><svg class="trace-board" viewBox="0 0 200 220" role="img" aria-label="Trace the letter ' +
+    '<div class="stage"><div class="trace-wrap"><p class="prompt">' +
+    title +
+    '</p><div class="trace-card"><svg class="trace-board" viewBox="0 0 200 220" role="img" aria-label="Trace ' +
     glyph +
     '"><rect class="hit" x="0" y="0" width="200" height="220" fill="#fff" fill-opacity="0"></rect><g class="guides">' +
     paths +
@@ -775,7 +890,7 @@ function renderGrown() {
     '<main class="screen" data-screen="grownups">' +
     header(true) +
     '<div class="grown-body"><h1 class="g-title">For grown-ups</h1>' +
-    "<p class=\"g-note\">Letters and numbers are the first lessons. More will be added. All letters are on to start. Nothing is timed, and there is no score.</p>" +
+    "<p class=\"g-note\">Letters, numbers, shapes, and colors are the lessons so far. More will be added. All letters are on to start. Nothing is timed, and there is no score.</p>" +
     '<div class="chips"><button class="chip" data-action="show-intro">Show the tour</button></div>' +
     '<section class="g-sec"><h2 class="g-label">Letters</h2><div class="chips">' +
     chips(LETTER_RANGES, save.letterRange, "letter-range") +
@@ -793,6 +908,12 @@ function renderGrown() {
     "</div></section>" +
     '<section class="g-sec"><h2 class="g-label">Numbers</h2><div class="chips">' +
     chips(NUMBER_RANGES, save.numberRange, "number-range") +
+    '</div></section>' +
+    '<section class="g-sec"><h2 class="g-label">Shapes</h2><div class="chips">' +
+    chips(SHAPE_RANGES, save.shapeRange, "shape-range") +
+    '</div></section>' +
+    '<section class="g-sec"><h2 class="g-label">Colors</h2><div class="chips">' +
+    chips(COLOR_RANGES, save.colorRange, "color-range") +
     "</div></section>" +
     '<section class="g-sec"><h2 class="g-label">Sound</h2><div class="chips">' +
     '<button class="chip' +
@@ -834,6 +955,106 @@ function renderGrown() {
   );
 }
 
+function renderShapeLook(shape) {
+  return (
+    '<div class="stage"><div class="look"><button class="letter-hit" data-action="hear" aria-label="Hear ' +
+    shape.name +
+    '">' +
+    shapeSvg(shape, "shape-lg") +
+    wordHtml(shape.name) +
+    '<span class="sound">' +
+    speakerIcon() +
+    " hear it</span></button></div></div>"
+  );
+}
+
+function renderShapeFind(shape) {
+  var html = "";
+  var i;
+  for (i = 0; i < ui.choices.length; i++) {
+    var id = ui.choices[i];
+    var choice = SHAPES[id];
+    var cls = "choice";
+    if (ui.findSolved && id === save.shapeIndex) cls += " is-right";
+    else if (ui.findSolved) cls += " is-dim";
+    if (ui.nudge === String(id)) cls += " nudge";
+    html +=
+      '<button class="' +
+      cls +
+      '" data-action="pick" data-id="' +
+      id +
+      '" aria-label="' +
+      choice.name +
+      '">' +
+      shapeSvg(choice, "shape-sm") +
+      '<span class="choice-word">' +
+      choice.name +
+      "</span></button>";
+  }
+  var feedback = ui.findSolved ? "Yes! " + shape.name : ui.saidWrong ? "Let's look again" : "";
+  return (
+    '<div class="stage"><div class="find"><p class="prompt">Find the ' +
+    shape.name +
+    '</p><div class="choices">' +
+    html +
+    '</div><p class="feedback" role="status">' +
+    feedback +
+    "</p>" +
+    againBtn() +
+    "</div></div>"
+  );
+}
+
+function renderColorLook(color) {
+  return (
+    '<div class="stage"><div class="look"><button class="letter-hit" data-action="hear" aria-label="Hear ' +
+    color.name +
+    '">' +
+    swatchHtml(color, "swatch-lg") +
+    wordHtml(color.name) +
+    '<span class="sound">' +
+    speakerIcon() +
+    " hear it</span></button></div></div>"
+  );
+}
+
+function renderColorFind(color) {
+  var html = "";
+  var i;
+  for (i = 0; i < ui.choices.length; i++) {
+    var id = ui.choices[i];
+    var choice = COLORS[id];
+    var cls = "choice choice-color";
+    if (ui.findSolved && id === save.colorIndex) cls += " is-right";
+    else if (ui.findSolved) cls += " is-dim";
+    if (ui.nudge === String(id)) cls += " nudge";
+    html +=
+      '<button class="' +
+      cls +
+      '" data-action="pick" data-id="' +
+      id +
+      '" aria-label="' +
+      choice.name +
+      '">' +
+      swatchHtml(choice, "swatch-sm") +
+      '<span class="choice-word">' +
+      choice.name +
+      "</span></button>";
+  }
+  var feedback = ui.findSolved ? "Yes! " + color.name : ui.saidWrong ? "Let's look again" : "";
+  return (
+    '<div class="stage"><div class="find"><p class="prompt">Find</p><p class="color-name">' +
+    color.name +
+    '</p><div class="choices">' +
+    html +
+    '</div><p class="feedback" role="status">' +
+    feedback +
+    "</p>" +
+    againBtn() +
+    "</div></div>"
+  );
+}
+
 function renderPlay() {
   var stage;
   var modes;
@@ -847,7 +1068,7 @@ function renderPlay() {
     if (ui.mode === "find") stage = renderLetterFind(item);
     else if (ui.mode === "trace") stage = renderTrace(item);
     else stage = renderLetterLook(item);
-  } else {
+  } else if (ui.screen === "numbers") {
     var n = currentNumber();
     modes = [
       { id: "look", label: "Look", icon: modeIcon("look") },
@@ -857,6 +1078,25 @@ function renderPlay() {
     if (ui.mode === "count") stage = renderCount(n);
     else if (ui.mode === "find") stage = renderNumberFind(n);
     else stage = renderNumberLook(n);
+  }
+  if (ui.screen === "shapes") {
+    var shape = currentShape();
+    modes = [
+      { id: "look", label: "Look", icon: modeIcon("look") },
+      { id: "find", label: "Find", icon: modeIcon("find") },
+      { id: "trace", label: "Trace", icon: modeIcon("trace") },
+    ];
+    if (ui.mode === "find") stage = renderShapeFind(shape);
+    else if (ui.mode === "trace") stage = renderTrace({ ch: shape.name, lower: shape.name, strokes: shape.strokes, shape: true });
+    else stage = renderShapeLook(shape);
+  } else if (ui.screen === "colors") {
+    var color = currentColor();
+    modes = [
+      { id: "look", label: "Look", icon: modeIcon("look") },
+      { id: "find", label: "Find", icon: modeIcon("find") },
+    ];
+    if (ui.mode === "find") stage = renderColorFind(color);
+    else stage = renderColorLook(color);
   }
   var guard = challengeOn() && !challengeDone() ? " boxes" : "";
   return (
@@ -877,6 +1117,8 @@ function renderPlay() {
 function activityKey() {
   if (ui.screen === "letters") return "L:" + ui.mode + ":" + save.letterIndex + ":" + save.letterRange + ":" + letterForm();
   if (ui.screen === "numbers") return "N:" + ui.mode + ":" + save.numberIndex + ":" + save.numberRange;
+  if (ui.screen === "shapes") return "S:" + ui.mode + ":" + save.shapeIndex + ":" + save.shapeRange;
+  if (ui.screen === "colors") return "C:" + ui.mode + ":" + save.colorIndex + ":" + save.colorRange;
   return "";
 }
 
@@ -894,12 +1136,16 @@ function ensureActivity() {
   ui.choices = [];
   if (ui.screen === "letters" && ui.mode === "find") ui.choices = makeLetterChoices(save.letterIndex);
   if (ui.screen === "numbers" && ui.mode === "find") ui.choices = makeNumberChoices(save.numberIndex);
+  if (ui.screen === "shapes" && ui.mode === "find") ui.choices = makeIndexChoices(save.shapeIndex, SHAPES, currentShapeRange());
+  if (ui.screen === "colors" && ui.mode === "find") ui.choices = makeIndexChoices(save.colorIndex, COLORS, currentColorRange());
 }
 
 function setTitle() {
   var t = "Manna & Milk";
   if (ui.screen === "letters") t = "Manna & Milk · " + currentLetter().ch;
   else if (ui.screen === "numbers") t = "Manna & Milk · " + currentNumber();
+  else if (ui.screen === "shapes") t = "Manna & Milk · " + currentShape().name;
+  else if (ui.screen === "colors") t = "Manna & Milk · " + currentColor().name;
   else if (ui.screen === "grownups") t = "Manna & Milk · Grown-ups";
   else if (ui.screen === "pin") t = "Manna & Milk · PIN";
   else if (ui.screen === "intro") t = "Manna & Milk · For grown-ups";
@@ -920,6 +1166,7 @@ function render() {
   app.innerHTML = html;
   setTitle();
   if (ui.screen === "letters" && ui.mode === "trace") setupTrace();
+  if (ui.screen === "shapes" && ui.mode === "trace") setupTrace();
 }
 
 function pickVoice(list) {
@@ -1064,12 +1311,16 @@ function scheduleAdvance() {
   var mode = ui.mode;
   var letter = save.letterIndex;
   var number = save.numberIndex;
+  var shape = save.shapeIndex;
+  var color = save.colorIndex;
   advanceTimer = window.setTimeout(function () {
     advanceTimer = 0;
     if (ui.screen !== screen || ui.mode !== mode) return;
     if (mode !== "find" && mode !== "trace" && mode !== "count") return;
     if (screen === "letters" && save.letterIndex !== letter) return;
     if (screen === "numbers" && save.numberIndex !== number) return;
+    if (screen === "shapes" && save.shapeIndex !== shape) return;
+    if (screen === "colors" && save.colorIndex !== color) return;
     if (mode === "find" && !ui.findSolved) return;
     if (mode === "count" && !ui.countDone) return;
     if (mode === "trace" && !trace.finished) return;
@@ -1099,7 +1350,7 @@ function speak(text, onDone) {
       } catch (err) {}
     }
     var src = CLIPS[text];
-    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=13";
+    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=14";
     spoken = new Audio(src);
     spoken.volume = 1;
     spoken.preload = "auto";
@@ -1150,6 +1401,15 @@ function speakCurrent() {
     if (ui.mode === "find") speak("Find " + word + ".");
     else if (ui.mode === "count") speak(n <= 10 ? "Tap each apple." : "Tap each one.");
     else speak(word + ".");
+  } else if (ui.screen === "shapes") {
+    var shape = currentShape();
+    if (ui.mode === "find") speak(shape.find);
+    else if (ui.mode === "trace") speak(shape.trace);
+    else speak(shape.say);
+  } else if (ui.screen === "colors") {
+    var color = currentColor();
+    if (ui.mode === "find") speak(color.find);
+    else speak(color.say);
   }
 }
 
@@ -1170,6 +1430,22 @@ function goLetters() {
 
 function goNumbers() {
   ui.screen = "numbers";
+  ui.mode = "look";
+  ui.choiceKey = "";
+  render();
+  speakCurrent();
+}
+
+function goShapes() {
+  ui.screen = "shapes";
+  ui.mode = "look";
+  ui.choiceKey = "";
+  render();
+  speakCurrent();
+}
+
+function goColors() {
+  ui.screen = "colors";
   ui.mode = "look";
   ui.choiceKey = "";
   render();
@@ -1203,6 +1479,18 @@ function step(dir) {
     if (n > nr.to) n = nr.from;
     if (n < nr.from) n = nr.to;
     save.numberIndex = n;
+  } else if (ui.screen === "shapes") {
+    var sr = currentShapeRange();
+    var s = save.shapeIndex + dir;
+    if (s > sr.to) s = sr.from;
+    if (s < sr.from) s = sr.to;
+    save.shapeIndex = s;
+  } else if (ui.screen === "colors") {
+    var cr = currentColorRange();
+    var c = save.colorIndex + dir;
+    if (c > cr.to) c = cr.from;
+    if (c < cr.from) c = cr.to;
+    save.colorIndex = c;
   } else return;
   persist();
   ui.choiceKey = "";
@@ -1252,11 +1540,31 @@ function setLetterForm(id) {
   render();
 }
 
+function setShapeRange(id) {
+  var r = rangeById(SHAPE_RANGES, id);
+  if (!r) return;
+  save.shapeRange = id;
+  save.shapeIndex = r.from;
+  ui.choiceKey = "";
+  persist();
+  render();
+}
+
 function setNumberRange(id) {
   var r = rangeById(NUMBER_RANGES, id);
   if (!r) return;
   save.numberRange = id;
   save.numberIndex = r.from;
+  ui.choiceKey = "";
+  persist();
+  render();
+}
+
+function setColorRange(id) {
+  var r = rangeById(COLOR_RANGES, id);
+  if (!r) return;
+  save.colorRange = id;
+  save.colorIndex = r.from;
   ui.choiceKey = "";
   persist();
   render();
@@ -1283,7 +1591,10 @@ function setVoice(on) {
 
 function onPick(raw) {
   var id = Number(raw);
-  var correct = ui.screen === "letters" ? save.letterIndex : save.numberIndex;
+  var correct = save.letterIndex;
+  if (ui.screen === "numbers") correct = save.numberIndex;
+  else if (ui.screen === "shapes") correct = save.shapeIndex;
+  else if (ui.screen === "colors") correct = save.colorIndex;
   if (ui.findSolved) {
     if (id === correct) speakCurrent();
     return;
@@ -1365,7 +1676,7 @@ function isPalm(e) {
 var palmIds = {};
 
 function kidScreen() {
-  return ui.screen === "home" || ui.screen === "letters" || ui.screen === "numbers";
+  return ui.screen === "home" || ui.screen === "letters" || ui.screen === "numbers" || ui.screen === "shapes" || ui.screen === "colors";
 }
 
 function palmBlocked(e) {
@@ -1397,6 +1708,8 @@ function onClick(e) {
   if (action === "grownups" || action === "home") return;
   if (action === "letters") goLetters();
   else if (action === "numbers") goNumbers();
+  else if (action === "shapes") goShapes();
+  else if (action === "colors") goColors();
   else if (action === "done") onDone();
   else if (action === "next") {
     if (!nextLocked()) step(1);
@@ -1412,6 +1725,8 @@ function onClick(e) {
   else if (action === "letter-range") setLetterRange(btn.getAttribute("data-id"));
   else if (action === "letter-form") setLetterForm(btn.getAttribute("data-id"));
   else if (action === "number-range") setNumberRange(btn.getAttribute("data-id"));
+  else if (action === "shape-range") setShapeRange(btn.getAttribute("data-id"));
+  else if (action === "color-range") setColorRange(btn.getAttribute("data-id"));
   else if (action === "voice") setVoice(btn.getAttribute("data-value") === "on");
   else if (action === "theme") setTheme(btn.getAttribute("data-value"));
   else if (action === "install-update" && window.SunnyUpdate && SunnyUpdate.install) SunnyUpdate.install();
@@ -1798,7 +2113,7 @@ function traceProgress() {
   }
   paintTraceGuides();
   if (!all || !trace.guideLength || drawnLength() < trace.guideLength * 0.5) return;
-  if (letterForm() === "both" && ui.traceCase !== "small") {
+  if (ui.screen === "letters" && letterForm() === "both" && ui.traceCase !== "small") {
     ui.traceCase = "small";
     render();
     return;
@@ -1857,7 +2172,7 @@ function onDown(e) {
     startHold(grown, e, "grownups");
     return;
   }
-  if (ui.screen === "letters" && ui.mode === "trace") {
+  if ((ui.screen === "letters" || ui.screen === "shapes") && ui.mode === "trace") {
     var card = e.target.closest ? e.target.closest(".trace-card") : null;
     var svg = card ? card.querySelector(".trace-board") : null;
     if (svg) startDraw(e, svg);
@@ -1936,8 +2251,8 @@ var INTRO = [
     body: "This short tour is only for you. She can play when you finish.",
   },
   {
-    title: "Two lessons",
-    body: "Letters and Numbers are on the first page. More lessons will be added later.",
+    title: "Four lessons",
+    body: "Letters, Numbers, Shapes, and Colors are on the first page. More lessons will be added later.",
   },
   {
     title: "How she plays",
