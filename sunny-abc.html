@@ -2822,8 +2822,10 @@ function updateSection() {
   }
   var info = readUpdate();
   var note = "Looking for a newer copy…";
-  if (info.state === "ready") note = "Version " + info.version + " is ready. It installs over this one. You do not uninstall.";
-  else if (info.state === "current") note = "This is the newest copy" + (info.current ? " (" + info.current + ")." : ".");
+  if (info.state === "ready") {
+    note = "Version " + info.version + " is ready. It installs over this one.";
+    if (save.pin) note += " The tablet unlocks for that step, then locks again when you come back.";
+  } else if (info.state === "current") note = "This is the newest copy" + (info.current ? " (" + info.current + ")." : ".");
   else if (info.state === "downloading") note = "Downloading the newer copy…";
   else if (info.state === "error") note = "Couldn't check just now. The game still works offline.";
   var btn = "";

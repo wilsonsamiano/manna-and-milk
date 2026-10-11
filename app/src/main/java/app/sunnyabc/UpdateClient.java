@@ -1,6 +1,8 @@
 package app.sunnyabc;
 
 import androidx.appcompat.app.AlertDialog;
+import android.app.ActivityManager;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -35,6 +37,8 @@ public class UpdateClient {
     private boolean asked;
     private boolean forceOffer;
     private long lastCheck;
+    private boolean resumePin;
+    private int handoff;
 
     public UpdateClient(MainActivity activity, WebView webView) {
         this.activity = activity;
@@ -62,9 +66,17 @@ public class UpdateClient {
         return statusJson;
     }
 
-    @JavascriptInterface
-    public void install() {
-        activity.runOnUiThread(this::openInstaller);
+    public void onHostResume() {
+        if (handoff == 1) {
+            if (canInstall()) {
+                handoff = 2;
+                launchInstaller();
+            } else {
+                finishHandoff();
+            }
+            return;
+        }
+        if (handoff == 2) finishHandoff();
     }
 
     private void begin(boolean force) {
@@ -182,6 +194,7 @@ public class UpdateClient {
     private void offer() {
         if (activity.isFinishing() || asked || readyVersion.length() == 0) return;
         if (!statusJson.contains("\"ready\"")) return;
+        if (isPinned()) return;
         SharedPreferences prefs = activity.getSharedPreferences("sunny-update", 0);
         if (!forceOffer && readyVersion.equals(prefs.getString("skipped", ""))) return;
         forceOffer = false;
@@ -194,15 +207,65 @@ public class UpdateClient {
                 .show();
     }
 
+    @JavascriptInterface
+    public void install() {
+        activity.runOnUiThread(this::openInstaller);
+    }
+
+    private boolean isPinned() {
+        ActivityManager am = (ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE);
+        if (am == null) return false;
+        return am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE;
+    }
+
+    private boolean canInstall() {
+        return Build.VERSION.SDK_INT < 26 || activity.getPackageManager().canRequestPackageInstalls();
+    }
+
     private void openInstaller() {
-        if (!apkFile.exists()) return;
-        if (Build.VERSION.SDK_INT >= 26 && !activity.getPackageManager().canRequestPackageInstalls()) {
-            Intent settings = new Intent(
-                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
-                    Uri.parse("package:" + activity.getPackageName()));
-            activity.startActivity(settings);
+        if (!apkFile.exists() || activity.isFinishing()) return;
+        resumePin = isPinned();
+        if (resumePin) {
+            try {
+                activity.stopLockTask();
+            } catch (RuntimeException ignored) {
+            }
+        }
+        handoff = 0;
+        activity.getWindow().getDecorView().postDelayed(this::launchInstaller, resumePin ? 400 : 0);
+    }
+
+    private void finishHandoff() {
+        handoff = 0;
+        if (!resumePin || activity.isFinishing()) {
+            resumePin = false;
             return;
         }
+        resumePin = false;
+        try {
+            activity.startLockTask();
+        } catch (RuntimeException ignored) {
+        }
+    }
+
+    private void launchInstaller() {
+        if (!apkFile.exists() || activity.isFinishing()) {
+            finishHandoff();
+            return;
+        }
+        if (!canInstall()) {
+            handoff = 1;
+            try {
+                Intent settings = new Intent(
+                        Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:" + activity.getPackageName()));
+                activity.startActivity(settings);
+            } catch (RuntimeException err) {
+                finishHandoff();
+            }
+            return;
+        }
+        handoff = 2;
         Uri uri = FileProvider.getUriForFile(activity, activity.getPackageName() + ".fileprovider", apkFile);
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(uri, "application/vnd.android.package-archive");
@@ -215,7 +278,11 @@ public class UpdateClient {
             activity.grantUriPermission(
                     handlers.get(i).activityInfo.packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
         }
-        activity.startActivity(intent);
+        try {
+            activity.startActivity(intent);
+        } catch (RuntimeException err) {
+            finishHandoff();
+        }
     }
 
     private String readVersion() {

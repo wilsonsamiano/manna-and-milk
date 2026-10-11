@@ -81,7 +81,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (updates != null) updates.start();
+        if (updates != null) {
+            updates.onHostResume();
+            updates.start();
+        }
     }
 
     @Override
