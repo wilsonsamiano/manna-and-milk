@@ -563,7 +563,7 @@ function renderCount(n) {
   var feedback = ui.countDone ? "Yes! " + numberWord(n) : "";
   return (
     '<div class="stage"><div class="count-wrap"><p class="prompt">' +
-    (n <= 10 ? "Tap each apple" : "Tap each row") +
+    (n <= 10 ? "Tap each apple" : "Tap each ten") +
     '</p><p class="tally" aria-live="polite">' +
     tally +
     '</p><div class="qty">' +
@@ -925,7 +925,7 @@ function speak(text) {
       } catch (err) {}
     }
     var src = CLIPS[text];
-    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=7";
+    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=8";
     spoken = new Audio(src);
     spoken.volume = 1;
     spoken.preload = "auto";
@@ -965,7 +965,7 @@ function speakCurrent() {
     var n = currentNumber();
     var word = numberWord(n);
     if (ui.mode === "find") speak("Find " + word + ".");
-    else if (ui.mode === "count") speak(n <= 10 ? "Tap each dot." : "Tap each block.");
+    else if (ui.mode === "count") speak(n <= 10 ? "Tap each apple." : "Tap each ten.");
     else speak(word + ".");
   }
 }
