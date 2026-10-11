@@ -229,6 +229,14 @@ function persist() {
   } catch (err) {}
 }
 
+function syncTabletLock() {
+  if (!window.SunnyLock) return;
+  try {
+    if (save.pin) SunnyLock.pinApp();
+    else SunnyLock.unpinApp();
+  } catch (err) {}
+}
+
 function currentLetterRange() {
   return rangeById(LETTER_RANGES, save.letterRange) || LETTER_RANGES[0];
 }
@@ -378,9 +386,18 @@ function modeIcon(kind) {
   return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.5" cy="13" r="3" fill="currentColor"/><circle cx="13" cy="8.5" r="3" fill="currentColor"/><circle cx="17.5" cy="15" r="3" fill="currentColor"/></svg>';
 }
 
+function homeLocked() {
+  return !!save.pin && ui.screen !== "grownups";
+}
+
 function header(withHome) {
+  var locked = homeLocked();
   var home = withHome
-    ? '<button class="icon-btn home-btn" data-action="home" aria-label="Home. Hold to go home.">' +
+    ? '<button class="icon-btn home-btn' +
+      (locked ? " locked" : "") +
+      '" data-action="home" aria-label="' +
+      (locked ? "Home is locked." : "Home. Hold to go home.") +
+      '">' +
       houseIcon() +
       "</button>"
     : "";
@@ -766,9 +783,12 @@ function renderGrown() {
     "</section>" +
     '<section class="g-sec"><h2 class="g-label">Parent lock</h2>' +
     (save.pin
-      ? '<p class="g-note">Holding the house or the sun asks for the PIN. In a challenge, next and back wait until she finishes. Then next turns on.</p>' +
-        '<div class="chips"><button class="chip" data-action="pin-change">Change PIN</button><button class="chip" data-action="pin-off">Turn off</button></div>'
-      : '<p class="g-note">Set a 4-digit PIN so only a grown-up can hold the house to leave, or open this page. Until then, holding the house goes straight home.</p>' +
+      ? '<p class="g-note">The house is locked, and so is the tablet Home button. Hold the sun, enter the PIN, then tap Go home. Turn the PIN off to unlock both.</p>' +
+        (window.SunnyLock
+          ? '<p class="g-note">If the tablet Home button still leaves the app, turn on Screen pinning once. On a Fire tablet that is Settings, then Security & Privacy, then Screen pinning.</p>'
+          : "") +
+        '<div class="chips"><button class="chip" data-action="go-home">Go home</button><button class="chip" data-action="pin-change">Change PIN</button><button class="chip" data-action="pin-off">Turn off</button></div>'
+      : '<p class="g-note">Set a 4-digit PIN to lock the house and the tablet Home button. Until then, hold the house to go home.</p>' +
         '<div class="chips"><button class="chip on" data-action="pin-set">Set a PIN</button></div>') +
     "</section>" +
     updateSection() +
@@ -1289,6 +1309,7 @@ function onClick(e) {
   else if (action === "pin-set") openPin("new", "");
   else if (action === "pin-change") openPin("old", "change");
   else if (action === "pin-off") openPin("old", "off");
+  else if (action === "go-home") goHome();
 }
 
 function clearHold() {
@@ -1315,8 +1336,8 @@ function startHold(el, e, kind) {
 }
 
 function holdHome() {
-  if (save.pin) openPin("enter", "home");
-  else goHome();
+  if (save.pin && ui.screen !== "grownups") return;
+  goHome();
 }
 
 function holdGrown() {
@@ -1407,6 +1428,7 @@ function finishPin() {
     if (ui.pinMode === "old" && ui.pinNext === "off") {
       save.pin = "";
       persist();
+      syncTabletLock();
       closePin();
       return;
     }
@@ -1442,6 +1464,7 @@ function finishPin() {
   save.pin = entered;
   ui.pinDraft = "";
   persist();
+  syncTabletLock();
   ui.pinEntry = "";
   ui.screen = "grownups";
   render();
@@ -1707,6 +1730,7 @@ function addPoint(e, svg) {
 function onDown(e) {
   var home = e.target.closest ? e.target.closest("[data-action='home']") : null;
   if (home) {
+    if (save.pin && ui.screen !== "grownups") return;
     startHold(home, e, "home");
     return;
   }
@@ -1856,6 +1880,7 @@ function init() {
     });
   }
   registerWorker();
+  syncTabletLock();
   render();
 }
 

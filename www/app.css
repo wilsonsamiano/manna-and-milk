@@ -125,6 +125,10 @@ button:focus-visible {
   background: var(--sun);
 }
 
+.home-btn.locked {
+  opacity: 0.35;
+}
+
 .icon-btn.holding::after {
   content: "";
   position: absolute;

@@ -9,6 +9,7 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
+import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
@@ -61,6 +62,13 @@ public class MainActivity extends AppCompatActivity {
         UpdateClient updates = new UpdateClient(this, webView);
         this.updates = updates;
         updates.attach();
+        webView.addJavascriptInterface(new LockClient(this), "SunnyLock");
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+            }
+        });
 
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
@@ -85,10 +93,5 @@ public class MainActivity extends AppCompatActivity {
     @Override
     @SuppressWarnings("deprecation")
     public void onBackPressed() {
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
-            return;
-        }
-        super.onBackPressed();
     }
 }

@@ -1,0 +1,40 @@
+package app.sunnyabc;
+
+import android.app.ActivityManager;
+import android.content.Context;
+import android.webkit.JavascriptInterface;
+
+public class LockClient {
+    private final MainActivity activity;
+
+    public LockClient(MainActivity activity) {
+        this.activity = activity;
+    }
+
+    @JavascriptInterface
+    public void pinApp() {
+        activity.runOnUiThread(() -> {
+            try {
+                activity.startLockTask();
+            } catch (RuntimeException ignored) {
+            }
+        });
+    }
+
+    @JavascriptInterface
+    public void unpinApp() {
+        activity.runOnUiThread(() -> {
+            try {
+                activity.stopLockTask();
+            } catch (RuntimeException ignored) {
+            }
+        });
+    }
+
+    @JavascriptInterface
+    public String pinned() {
+        ActivityManager am = (ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE);
+        if (am == null) return "0";
+        return am.getLockTaskModeState() != ActivityManager.LOCK_TASK_MODE_NONE ? "1" : "0";
+    }
+}
