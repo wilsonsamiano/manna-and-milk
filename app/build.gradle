@@ -10,8 +10,8 @@ android {
         applicationId "app.sunnyabc"
         minSdk 24
         targetSdk 35
-        versionCode 14
-        versionName "0.1.13-beta"
+        versionCode 15
+        versionName "0.1.14-beta"
     }
 
     signingConfigs {
