@@ -1,9 +1,7 @@
-Sunny ABC 0.1.21, still a published beta.
+Manna & Milk 0.1.22, still a published beta.
 
-What changed:
-- Install update unlocks the tablet pin, opens the installer, then locks again if you come back.
-- The update popup stays off while the app is pinned, so it does not interrupt her. Use Install update under the sun.
+This is the same app as Sunny ABC, with a new name. It installs over the old one. You do not uninstall first.
 
-It installs over 0.1.20. You do not uninstall first. Hold the sun and tap Check for updates.
+Sunny ABC was already used by another kids brand. Manna & Milk is the new name: first lessons now, more Christian lessons later. Letters and numbers are still here.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)

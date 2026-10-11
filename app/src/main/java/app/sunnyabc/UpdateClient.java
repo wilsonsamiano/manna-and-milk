@@ -200,7 +200,7 @@ public class UpdateClient {
         forceOffer = false;
         asked = true;
         new AlertDialog.Builder(activity)
-                .setTitle("A newer Sunny ABC is ready")
+                .setTitle("A newer Manna & Milk is ready")
                 .setMessage("Version " + readyVersion + " installs over this one. You do not uninstall the old app.")
                 .setPositiveButton("Update", (d, w) -> openInstaller())
                 .setNegativeButton("Not now", (d, w) -> prefs.edit().putString("skipped", readyVersion).apply())

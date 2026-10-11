@@ -1483,7 +1483,7 @@ function renderHome() {
   return (
     '<main class="screen" data-screen="home">' +
     header(false) +
-    '<div class="home-main"><h1 class="brand">Sunny ABC</h1><p class="lede">Letters and numbers</p><div class="pick">' +
+    '<div class="home-main"><h1 class="brand">Manna & Milk</h1><p class="lede">Little lessons</p><div class="pick">' +
     '<button class="pick-card" data-action="letters"><span class="pair pair-card"><span class="upper">A</span><span class="lower">a</span></span><span class="pick-label">Letters</span></button>' +
     '<button class="pick-card" data-action="numbers"><span class="num">123</span><span class="pick-label">Numbers</span></button>' +
     "</div></div>" +
@@ -1708,7 +1708,7 @@ function renderGrown() {
     '<main class="screen" data-screen="grownups">' +
     header(true) +
     '<div class="grown-body"><h1 class="g-title">For grown-ups</h1>' +
-    "<p class=\"g-note\">All letters are on to start. Pick a smaller set any time. Nothing is timed, and there is no score.</p>" +
+    "<p class=\"g-note\">Letters and numbers are the first lessons. More will be added. All letters are on to start. Nothing is timed, and there is no score.</p>" +
     '<section class="g-sec"><h2 class="g-label">Letters</h2><div class="chips">' +
     chips(LETTER_RANGES, save.letterRange, "letter-range") +
     '</div></section>' +
@@ -1826,11 +1826,11 @@ function ensureActivity() {
 }
 
 function setTitle() {
-  var t = "Sunny ABC";
-  if (ui.screen === "letters") t = "Sunny ABC · " + currentLetter().ch;
-  else if (ui.screen === "numbers") t = "Sunny ABC · " + currentNumber();
-  else if (ui.screen === "grownups") t = "Sunny ABC · Grown-ups";
-  else if (ui.screen === "pin") t = "Sunny ABC · PIN";
+  var t = "Manna & Milk";
+  if (ui.screen === "letters") t = "Manna & Milk · " + currentLetter().ch;
+  else if (ui.screen === "numbers") t = "Manna & Milk · " + currentNumber();
+  else if (ui.screen === "grownups") t = "Manna & Milk · Grown-ups";
+  else if (ui.screen === "pin") t = "Manna & Milk · PIN";
   document.title = t;
 }
 

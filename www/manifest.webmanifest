@@ -1,7 +1,7 @@
 {
-  "name": "Sunny ABC",
-  "short_name": "Sunny ABC",
-  "description": "A calm alphabet and numbers game for little ones.",
+  "name": "Manna & Milk",
+  "short_name": "Manna & Milk",
+  "description": "A calm Christian lesson app for little ones.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
