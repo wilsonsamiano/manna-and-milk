@@ -1,6 +1,6 @@
 "use strict";
 
-var CACHE = "sunny-abc-v11";
+var CACHE = "sunny-abc-v13";
 var ASSETS = [
   "./",
   "./index.html",
