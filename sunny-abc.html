@@ -2747,6 +2747,95 @@ function findResting(e) {
   return true;
 }
 
+function choiceAt(x, y) {
+  var el = document.elementFromPoint(x, y);
+  if (!el || !el.closest) return null;
+  return el.closest(".choice");
+}
+
+var fingers = {};
+var lastPickAt = 0;
+
+function selectChoice(id) {
+  var now = Date.now();
+  if (id == null || id === "") return;
+  if (now - lastPickAt < 450) return;
+  lastPickAt = now;
+  onPick(id);
+}
+
+function markFingersPalm() {
+  var k;
+  for (k in fingers) fingers[k].palm = true;
+}
+
+function onFindTouchStart(e) {
+  if (ui.mode !== "find" || challengeDone()) return;
+  var prior = e.touches.length - e.changedTouches.length;
+  var i;
+  var t;
+  var choice;
+  var id;
+  var size;
+  var picks = [];
+  if (prior > 0) markFingersPalm();
+  for (i = 0; i < e.changedTouches.length; i++) {
+    t = e.changedTouches[i];
+    choice = choiceAt(t.clientX, t.clientY);
+    id = choice ? choice.getAttribute("data-id") : "";
+    size = Math.max((t.radiusX || 0) * 2, (t.radiusY || 0) * 2);
+    fingers[t.identifier] = {
+      id: id,
+      palm: !id || size >= 48,
+      x: t.clientX,
+      y: t.clientY,
+      at: Date.now(),
+      used: false,
+    };
+    if (id && size < 48) picks.push(t.identifier);
+  }
+  if ((prior > 0 || e.changedTouches.length > 1) && picks.length) {
+    id = picks[picks.length - 1];
+    fingers[id].palm = false;
+    fingers[id].used = true;
+    selectChoice(fingers[id].id);
+    for (i = 0; i < e.changedTouches.length; i++) {
+      t = e.changedTouches[i];
+      if (t.identifier !== id) fingers[t.identifier].palm = true;
+    }
+  }
+  if (e.cancelable) e.preventDefault();
+}
+
+function onFindTouchEnd(e) {
+  var i;
+  var t;
+  var f;
+  var choice;
+  var id;
+  var dx;
+  var dy;
+  for (i = 0; i < e.changedTouches.length; i++) {
+    t = e.changedTouches[i];
+    f = fingers[t.identifier];
+    delete fingers[t.identifier];
+    if (!f || f.palm || f.used) continue;
+    if (ui.mode !== "find" || challengeDone()) continue;
+    if (Date.now() - f.at > 800) continue;
+    dx = t.clientX - f.x;
+    dy = t.clientY - f.y;
+    if (dx * dx + dy * dy > 3600) continue;
+    choice = choiceAt(t.clientX, t.clientY);
+    id = choice ? choice.getAttribute("data-id") : f.id;
+    if (id) selectChoice(id);
+  }
+}
+
+function onFindTouchCancel(e) {
+  var i;
+  for (i = 0; i < e.changedTouches.length; i++) delete fingers[e.changedTouches[i].identifier];
+}
+
 function choiceBox(node) {
   if (!node || !node.closest) return null;
   return node.closest(".choice, button.qty-one, .letter-hit, .pic-card, .trace-card, .pick-card");
@@ -2808,7 +2897,7 @@ function onClick(e) {
   } else if (action === "mode") setMode(btn.getAttribute("data-mode"));
   else if (action === "hear") speakCurrent();
   else if (action === "again") onAgain();
-  else if (action === "pick") onPick(btn.getAttribute("data-id"));
+  else if (action === "pick") selectChoice(btn.getAttribute("data-id"));
   else if (action === "dot") onDot(btn.getAttribute("data-i"));
   else if (action === "ten") onTen(btn.getAttribute("data-i"));
   else if (action === "one") onOne(btn.getAttribute("data-i"));
@@ -3534,6 +3623,9 @@ function registerWorker() {
 function init() {
   var app = document.getElementById("app");
   app.addEventListener("click", onClick);
+  document.addEventListener("touchstart", onFindTouchStart, { capture: true, passive: false });
+  document.addEventListener("touchend", onFindTouchEnd, { capture: true, passive: false });
+  document.addEventListener("touchcancel", onFindTouchCancel, { capture: true });
   app.addEventListener("pointerdown", onDown);
   app.addEventListener("pointermove", onMove);
   document.addEventListener("pointerup", onUp);

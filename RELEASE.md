@@ -1,7 +1,7 @@
-Manna & Milk 0.3.2, still a published beta.
+Manna & Milk 0.3.3, still a published beta.
 
-- In every Find lesson, only the three choice boxes respond. A palm on the rest of the screen does nothing.
+- Find follows the finger on a choice even when her palm is already resting on the screen.
 
-It installs over 0.3.1. You do not uninstall first.
+It installs over 0.3.2. You do not uninstall first.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)
