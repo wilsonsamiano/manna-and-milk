@@ -1,10 +1,9 @@
-Sunny ABC 0.1.9, still a published beta.
+Sunny ABC 0.1.10, still a published beta.
 
 What changed:
-- You do not have to close the app to look for an update.
-- Hold the sun and tap Check for updates.
-- Coming back to the app also looks again.
+- In Count, each picture counts as one.
+- The happy sound waits until every picture for that number has been tapped.
 
-It installs over 0.1.8. You do not uninstall first. Open the app once so it can see this copy, then later checks happen inside the app.
+It installs over 0.1.9. You do not uninstall first. Hold the sun and tap Check for updates.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)

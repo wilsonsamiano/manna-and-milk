@@ -366,76 +366,32 @@ function wordHtml(word) {
 
 function quantityHtml(n, interactive) {
   var i;
-  var k;
-  var html = "";
-  if (n <= 10) {
-    var word = countWord(0);
-    html = '<div class="qty-row qty-row-lg">';
-    for (i = 0; i < n; i++) {
-      var on = !interactive || ui.countTapped["d" + i];
-      if (interactive) {
-        html +=
-          '<button class="qty-one' +
-          (on ? " on" : "") +
-          '" data-action="dot" data-i="' +
-          i +
-          '" aria-label="' +
-          word +
-          '">' +
-          qtyImg(word) +
-          "</button>";
-      } else {
-        html += '<span class="qty-one on">' + qtyImg(word) + "</span>";
-      }
+  var html = '<div class="qty-groups">';
+  for (i = 0; i < n; i++) {
+    if (i % 10 === 0) {
+      if (i) html += "</div>";
+      html += '<div class="qty-row' + (n <= 10 ? " qty-row-lg" : "") + '">';
     }
-    return html + "</div>";
-  }
-  var tens = Math.floor(n / 10);
-  var ones = n % 10;
-  html = '<div class="qty-groups">';
-  for (i = 0; i < tens; i++) {
-    var rowWord = countWord(i);
-    var ton = !interactive || ui.countTapped["t" + i];
-    var cells = "";
-    for (k = 0; k < 10; k++) cells += qtyImg(rowWord);
+    var word = countWord(Math.floor(i / 10));
+    var on = !interactive || ui.countTapped["d" + i];
     if (interactive) {
       html +=
-        '<button class="qty-ten' +
-        (ton ? " on" : "") +
-        '" data-action="ten" data-i="' +
+        '<button class="qty-one' +
+        (on ? " on" : "") +
+        '" data-action="dot" data-i="' +
         i +
-        '" aria-label="Ten ' +
-        rowWord +
+        '" aria-label="' +
+        word +
+        " " +
+        (i + 1) +
         '">' +
-        cells +
+        qtyImg(word) +
         "</button>";
     } else {
-      html += '<div class="qty-ten on">' + cells + "</div>";
+      html += '<span class="qty-one on">' + qtyImg(word) + "</span>";
     }
   }
-  if (ones) {
-    var oneWord = countWord(tens);
-    html += '<div class="qty-row">';
-    for (i = 0; i < ones; i++) {
-      var oon = !interactive || ui.countTapped["o" + i];
-      if (interactive) {
-        html +=
-          '<button class="qty-one' +
-          (oon ? " on" : "") +
-          '" data-action="one" data-i="' +
-          i +
-          '" aria-label="' +
-          oneWord +
-          '">' +
-          qtyImg(oneWord) +
-          "</button>";
-      } else {
-        html += '<span class="qty-one on">' + qtyImg(oneWord) + "</span>";
-      }
-    }
-    html += "</div>";
-  }
-  return html + "</div>";
+  return html + "</div></div>";
 }
 
 function renderHome() {
@@ -563,7 +519,7 @@ function renderCount(n) {
   var feedback = ui.countDone ? "Yes! " + numberWord(n) : "";
   return (
     '<div class="stage"><div class="count-wrap"><p class="prompt">' +
-    (n <= 10 ? "Tap each apple" : "Tap each ten") +
+    (n <= 10 ? "Tap each apple" : "Tap each one") +
     '</p><p class="tally" aria-live="polite">' +
     tally +
     '</p><div class="qty">' +
@@ -915,8 +871,11 @@ function scheduleAdvance() {
   }, 2800);
 }
 
-function speak(text) {
-  if (!save.voice || !text) return;
+function speak(text, onDone) {
+  if (!save.voice || !text) {
+    if (onDone) onDone();
+    return;
+  }
   if (window.CLIPS && CLIPS[text]) {
     if (spoken) {
       try {
@@ -929,11 +888,15 @@ function speak(text) {
     spoken = new Audio(src);
     spoken.volume = 1;
     spoken.preload = "auto";
+    if (onDone) spoken.addEventListener("ended", onDone);
     var play = spoken.play();
     if (play && play.catch) play.catch(function () {});
     return;
   }
-  if (!window.speechSynthesis) return;
+  if (!window.speechSynthesis) {
+    if (onDone) onDone();
+    return;
+  }
   try {
     var syn = window.speechSynthesis;
     var u = new SpeechSynthesisUtterance(text);
@@ -942,6 +905,7 @@ function speak(text) {
     u.pitch = 1.04;
     u.lang = "en-US";
     u.volume = 1;
+    if (onDone) u.onend = onDone;
     var v = pickVoice(voices.length ? voices : syn.getVoices() || []);
     if (v && v.localService !== false) u.voice = v;
     try {
@@ -952,7 +916,9 @@ function speak(text) {
     try {
       syn.resume();
     } catch (err) {}
-  } catch (err) {}
+  } catch (err) {
+    if (onDone) onDone();
+  }
 }
 
 function speakCurrent() {
@@ -965,7 +931,7 @@ function speakCurrent() {
     var n = currentNumber();
     var word = numberWord(n);
     if (ui.mode === "find") speak("Find " + word + ".");
-    else if (ui.mode === "count") speak(n <= 10 ? "Tap each apple." : "Tap each ten.");
+    else if (ui.mode === "count") speak(n <= 10 ? "Tap each apple." : "Tap each one.");
     else speak(word + ".");
   }
 }
@@ -1111,15 +1077,17 @@ function onPick(raw) {
   }
 }
 
-function afterCount(add) {
+function afterCount() {
   if (ui.countDone) return;
-  ui.countValue += add;
   var target = currentNumber();
-  var done = ui.countValue >= target;
+  var counted = 0;
+  var i;
+  for (i = 0; i < target; i++) if (ui.countTapped["d" + i]) counted++;
+  ui.countValue = counted;
+  var done = counted === target && target > 0;
   if (done) ui.countDone = true;
   render();
-  speak(numberWord(ui.countValue) + ".");
-  if (done) chime();
+  speak(numberWord(ui.countValue) + ".", done ? chime : null);
 }
 
 function onDot(raw) {
@@ -1127,23 +1095,23 @@ function onDot(raw) {
   var key = "d" + raw;
   if (ui.countTapped[key]) return;
   ui.countTapped[key] = true;
-  afterCount(1);
+  afterCount();
 }
 
 function onTen(raw) {
   if (ui.countDone) return;
-  var key = "t" + raw;
+  var key = "d" + raw;
   if (ui.countTapped[key]) return;
   ui.countTapped[key] = true;
-  afterCount(10);
+  afterCount();
 }
 
 function onOne(raw) {
   if (ui.countDone) return;
-  var key = "o" + raw;
+  var key = "d" + raw;
   if (ui.countTapped[key]) return;
   ui.countTapped[key] = true;
-  afterCount(1);
+  afterCount();
 }
 
 function onClick(e) {
