@@ -30,8 +30,11 @@ public class UpdateClient {
     private final File apkFile;
     private final String currentVersion;
     private volatile String statusJson;
+    private volatile boolean busy;
     private String readyVersion = "";
     private boolean asked;
+    private boolean forceOffer;
+    private long lastCheck;
 
     public UpdateClient(MainActivity activity, WebView webView) {
         this.activity = activity;
@@ -46,7 +49,12 @@ public class UpdateClient {
     }
 
     public void start() {
-        new Thread(this::check, "sunny-update").start();
+        begin(false);
+    }
+
+    @JavascriptInterface
+    public void refresh() {
+        activity.runOnUiThread(() -> begin(true));
     }
 
     @JavascriptInterface
@@ -57,6 +65,29 @@ public class UpdateClient {
     @JavascriptInterface
     public void install() {
         activity.runOnUiThread(this::openInstaller);
+    }
+
+    private void begin(boolean force) {
+        if (busy) {
+            if (force) forceOffer = true;
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (!force && now - lastCheck < 60000) return;
+        busy = true;
+        lastCheck = now;
+        if (force) {
+            asked = false;
+            forceOffer = true;
+            setStatus(json("checking", ""));
+        }
+        new Thread(() -> {
+            try {
+                check();
+            } finally {
+                busy = false;
+            }
+        }, "sunny-update").start();
     }
 
     private void check() {
@@ -95,6 +126,10 @@ public class UpdateClient {
                 return;
             }
             String pretty = pretty(bestTag);
+            if (pretty.equals(readyVersion) && looksLikeApk(apkFile)) {
+                setStatus(json("ready", pretty));
+                return;
+            }
             setStatus(json("downloading", pretty));
             download(bestUrl);
             if (!looksLikeApk(apkFile)) {
@@ -148,7 +183,8 @@ public class UpdateClient {
         if (activity.isFinishing() || asked || readyVersion.length() == 0) return;
         if (!statusJson.contains("\"ready\"")) return;
         SharedPreferences prefs = activity.getSharedPreferences("sunny-update", 0);
-        if (readyVersion.equals(prefs.getString("skipped", ""))) return;
+        if (!forceOffer && readyVersion.equals(prefs.getString("skipped", ""))) return;
+        forceOffer = false;
         asked = true;
         new AlertDialog.Builder(activity)
                 .setTitle("A newer Sunny ABC is ready")

@@ -1173,6 +1173,7 @@ function onClick(e) {
   else if (action === "voice") setVoice(btn.getAttribute("data-value") === "on");
   else if (action === "theme") setTheme(btn.getAttribute("data-value"));
   else if (action === "install-update" && window.SunnyUpdate && SunnyUpdate.install) SunnyUpdate.install();
+  else if (action === "check-update" && window.SunnyUpdate && SunnyUpdate.refresh) SunnyUpdate.refresh();
 }
 
 function clearHold() {
@@ -1518,10 +1519,11 @@ function updateSection() {
   else if (info.state === "current") note = "This is the newest copy" + (info.current ? " (" + info.current + ")." : ".");
   else if (info.state === "downloading") note = "Downloading the newer copy…";
   else if (info.state === "error") note = "Couldn't check just now. The game still works offline.";
-  var btn =
-    info.state === "ready"
-      ? '<button class="chip on" data-action="install-update">Install update</button>'
-      : "";
+  var btn = "";
+  if (info.state === "ready") {
+    btn += '<button class="chip on" data-action="install-update">Install update</button>';
+  }
+  btn += '<button class="chip" data-action="check-update">Check for updates</button>';
   return '<section class="g-sec"><h2 class="g-label">Updates</h2><p class="g-note">' + note + "</p>" + btn + "</section>";
 }
 

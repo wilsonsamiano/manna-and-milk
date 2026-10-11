@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String GAME =
             "https://appassets.androidplatform.net/assets/www/index.html";
     private WebView webView;
+    private UpdateClient updates;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         UpdateClient updates = new UpdateClient(this, webView);
+        this.updates = updates;
         updates.attach();
 
         if (savedInstanceState != null) {
@@ -66,6 +68,12 @@ public class MainActivity extends AppCompatActivity {
             webView.loadUrl(GAME);
         }
         updates.start();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (updates != null) updates.start();
     }
 
     @Override
