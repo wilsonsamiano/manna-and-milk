@@ -2,8 +2,8 @@
 
 var KEY = "sunny-abc-v1";
 var SVGNS = "http://www.w3.org/2000/svg";
-var TRACE_RADIUS = 56;
-var TRACE_NEED = 0.32;
+var TRACE_RADIUS = 40;
+var TRACE_NEED = 0.7;
 
 var LETTER_RANGES = [
   { id: "A-Z", label: "All letters", from: 0, to: 25 },
@@ -863,10 +863,13 @@ function scheduleAdvance() {
   var number = save.numberIndex;
   advanceTimer = window.setTimeout(function () {
     advanceTimer = 0;
-    if (ui.screen !== screen || ui.mode !== "find" || mode !== "find") return;
+    if (ui.screen !== screen || ui.mode !== mode) return;
+    if (mode !== "find" && mode !== "trace" && mode !== "count") return;
     if (screen === "letters" && save.letterIndex !== letter) return;
     if (screen === "numbers" && save.numberIndex !== number) return;
-    if (!ui.findSolved) return;
+    if (mode === "find" && !ui.findSolved) return;
+    if (mode === "count" && !ui.countDone) return;
+    if (mode === "trace" && !trace.finished) return;
     step(1);
   }, 2800);
 }
@@ -1087,7 +1090,14 @@ function afterCount() {
   var done = counted === target && target > 0;
   if (done) ui.countDone = true;
   render();
-  speak(numberWord(ui.countValue) + ".", done ? chime : null);
+  if (!done) {
+    speak(numberWord(ui.countValue) + ".");
+    return;
+  }
+  speak(numberWord(ui.countValue) + ".", function () {
+    chime();
+    scheduleAdvance();
+  });
 }
 
 function onDot(raw) {
@@ -1185,20 +1195,44 @@ function samplePath(path, step) {
 function coverage(samples, points) {
   if (!samples.length || !points.length) return 0;
   var hit = 0;
-  var i, j;
+  var first = -1;
+  var last = -1;
+  var i;
+  var j;
   var r2 = TRACE_RADIUS * TRACE_RADIUS;
   for (i = 0; i < samples.length; i++) {
     var s = samples[i];
+    var near = false;
     for (j = 0; j < points.length; j++) {
       var dx = points[j].x - s.x;
       var dy = points[j].y - s.y;
       if (dx * dx + dy * dy <= r2) {
-        hit++;
+        near = true;
         break;
       }
     }
+    if (!near) continue;
+    hit++;
+    if (first < 0) first = i;
+    last = i;
   }
+  if (samples.length > 5 && (last - first) / (samples.length - 1) < 0.62) return 0;
   return hit / samples.length;
+}
+
+function drawnLength() {
+  var total = 0;
+  var i;
+  var j;
+  for (i = 0; i < trace.strokes.length; i++) {
+    var pts = trace.strokes[i];
+    for (j = 1; j < pts.length; j++) {
+      var dx = pts[j].x - pts[j - 1].x;
+      var dy = pts[j].y - pts[j - 1].y;
+      total += Math.sqrt(dx * dx + dy * dy);
+    }
+  }
+  return total;
 }
 
 function paintTraceGuides() {
@@ -1287,6 +1321,7 @@ function setupTrace() {
   trace.guides = null;
   trace.ink = null;
   trace.line = null;
+  trace.guideLength = 0;
   if (!svg) return;
   var guides = svg.querySelectorAll("path.guide");
   var arrows = svg.querySelector(".arrows");
@@ -1298,6 +1333,7 @@ function setupTrace() {
   for (i = 0; i < guides.length; i++) {
     trace.samples.push(samplePath(guides[i], 8));
     trace.done.push(false);
+    trace.guideLength += guides[i].getTotalLength();
     addArrow(arrows, guides[i]);
     addStep(steps, guides[i], i + 1, placed);
   }
@@ -1346,13 +1382,12 @@ function traceProgress() {
     if (!trace.done[i]) all = false;
   }
   paintTraceGuides();
-  if (all && tracePoints().length > 6) {
-    trace.finished = true;
-    var note = document.querySelector(".feedback");
-    if (note) note.textContent = "Yes! Nice tracing.";
-    chime();
-    speak("Nice tracing.");
-  }
+  if (!all || !trace.guideLength || drawnLength() < trace.guideLength * 0.5) return;
+  trace.finished = true;
+  var note = document.querySelector(".feedback");
+  if (note) note.textContent = "Yes! Nice tracing.";
+  chime();
+  speak("Nice tracing.", scheduleAdvance);
 }
 
 function startDraw(e, svg) {
