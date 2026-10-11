@@ -24,7 +24,7 @@ import org.json.JSONObject;
 
 public class UpdateClient {
     private static final String API =
-            "https://api.github.com/repos/wilsonsamiano/sunny-abc/releases?per_page=10";
+            "https://api.github.com/repos/wilsonsamiano/manna-and-milk/releases?per_page=10";
     private static final String ASSET = "sunny-abc-beta.apk";
 
     private final MainActivity activity;

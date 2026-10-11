@@ -1,9 +1,8 @@
-Manna & Milk 0.1.23, still a published beta.
+Manna & Milk 0.1.24, still a published beta.
 
-- The home picture is a bowl of manna and a cup of milk.
-- A short tour for grown-ups the first time you open the app. Show the tour again under the sun.
-- An update lists what changed, before you install it and again after it is on the tablet.
+- The GitHub project is now manna-and-milk. Old sunny-abc links still open this page.
+- The app looks for updates at the new name.
 
-It installs over 0.1.22. You do not uninstall first. Hold the sun and tap Check for updates.
+It installs over 0.1.23. You do not uninstall first.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)
