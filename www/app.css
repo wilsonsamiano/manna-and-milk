@@ -305,6 +305,9 @@ button:focus-visible {
   width: 86%;
   height: 86%;
   display: block;
+  object-fit: contain;
+  border-radius: 22px;
+  background: #fff;
 }
 
 .num {

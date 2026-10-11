@@ -102,132 +102,6 @@ var LETTERS = [
   L("Z", "z", "zebra", "zzz", "Z says zzz. Zebra.", ["M40 32 H160", "M160 32 L40 188", "M40 188 H160"]),
 ];
 
-var PICS = {
-  apple:
-    '<circle cx="44" cy="50" r="22" fill="#E36B58" stroke="#243044" stroke-width="3"/>' +
-    '<rect x="42" y="20" width="4" height="14" rx="2" fill="#5E9A62"/>' +
-    '<path d="M46 28c8-12 18-12 20-4-8 0-14 4-20 4z" fill="#5E9A62" stroke="#243044" stroke-width="3"/>',
-  ball:
-    '<circle cx="44" cy="44" r="26" fill="#7EB6E0" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M18 44h52M30 26c8 10 20 10 28 0M30 62c8-10 20-10 28 0" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>',
-  cat:
-    '<circle cx="44" cy="50" r="22" fill="#F5B942" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M24 42 L28 16 L40 36Z" fill="#F5B942" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<path d="M64 42 L60 16 L48 36Z" fill="#F5B942" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<circle cx="36" cy="48" r="3" fill="#243044"/><circle cx="52" cy="48" r="3" fill="#243044"/>' +
-    '<path d="M44 54 v4" stroke="#243044" stroke-width="3" stroke-linecap="round"/>' +
-    '<path d="M38 62 q6 5 12 0" fill="none" stroke="#243044" stroke-width="2" stroke-linecap="round"/>',
-  dog:
-    '<ellipse cx="26" cy="50" rx="12" ry="16" fill="#C4842A" stroke="#243044" stroke-width="3"/>' +
-    '<circle cx="46" cy="46" r="20" fill="#F5B942" stroke="#243044" stroke-width="3"/>' +
-    '<ellipse cx="60" cy="54" rx="12" ry="8" fill="#FFF4E4" stroke="#243044" stroke-width="3"/>' +
-    '<circle cx="66" cy="54" r="3" fill="#243044"/>' +
-    '<circle cx="40" cy="44" r="3" fill="#243044"/><circle cx="52" cy="44" r="3" fill="#243044"/>',
-  egg:
-    '<ellipse cx="44" cy="48" rx="20" ry="26" fill="#FFF9F1" stroke="#243044" stroke-width="3"/>' +
-    '<ellipse cx="36" cy="40" rx="5" ry="8" fill="#fff"/>',
-  fish:
-    '<ellipse cx="38" cy="46" rx="22" ry="14" fill="#7EB6E0" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M58 46 L78 30 L76 46 L78 62 Z" fill="#7EB6E0" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<circle cx="28" cy="44" r="3" fill="#243044"/>',
-  goat:
-    '<circle cx="44" cy="50" r="20" fill="#F5B942" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M30 38 C26 16 36 16 36 34" fill="none" stroke="#243044" stroke-width="3" stroke-linecap="round"/>' +
-    '<path d="M58 38 C62 16 52 16 52 34" fill="none" stroke="#243044" stroke-width="3" stroke-linecap="round"/>' +
-    '<ellipse cx="22" cy="50" rx="8" ry="6" fill="#F5B942" stroke="#243044" stroke-width="3"/>' +
-    '<ellipse cx="66" cy="50" rx="8" ry="6" fill="#F5B942" stroke="#243044" stroke-width="3"/>' +
-    '<circle cx="36" cy="48" r="2.4" fill="#243044"/><circle cx="52" cy="48" r="2.4" fill="#243044"/>' +
-    '<path d="M44 56 v12 M38 68 h12" fill="none" stroke="#243044" stroke-width="3" stroke-linecap="round"/>',
-  hat:
-    '<ellipse cx="44" cy="62" rx="30" ry="8" fill="#E36B58" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M28 58 L34 26 H54 L60 58 Z" fill="#F5B942" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<rect x="32" y="22" width="24" height="8" rx="2" fill="#E36B58" stroke="#243044" stroke-width="3"/>',
-  igloo:
-    '<path d="M14 64 H74 V48 A30 30 0 0 0 14 48 Z" fill="#FFF9F1" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M18 48 H70 M44 64 V40" fill="none" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M36 64 v-14 h16 V64" fill="#7EB6E0" stroke="#243044" stroke-width="3"/>',
-  juice:
-    '<path d="M30 30 h28 l-4 40 H34 Z" fill="#FFF9F1" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<path d="M32 42 h24 l-3 24 H35 Z" fill="#F5B942"/>' +
-    '<rect x="50" y="12" width="4" height="26" rx="2" fill="#5E9A62" stroke="#243044" stroke-width="2"/>',
-  kite:
-    '<path d="M44 12 L70 44 L44 76 L18 44 Z" fill="#F5B942" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<path d="M44 12 V76 M18 44 H70" fill="none" stroke="#243044" stroke-width="2"/>' +
-    '<path d="M44 76 c6 8 6 14 0 20 c6 0 12 4 14 8" fill="none" stroke="#C94B3A" stroke-width="3" stroke-linecap="round"/>',
-  leaf:
-    '<path d="M46 72 C20 60 16 30 28 20 C52 14 74 28 70 18 C64 48 58 72 46 72 Z" fill="#5E9A62" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M46 72 C50 50 60 34 72 20" fill="none" stroke="#243044" stroke-width="3" stroke-linecap="round"/>',
-  moon:
-    '<path d="M58 16 a24 24 0 1 0 0 52 a16 16 0 1 1 0-52 Z" fill="#F5B942" stroke="#243044" stroke-width="3"/>',
-  nest:
-    '<ellipse cx="44" cy="58" rx="28" ry="14" fill="#C4842A" stroke="#243044" stroke-width="3"/>' +
-    '<ellipse cx="44" cy="54" rx="16" ry="8" fill="#FFF4E4" stroke="#243044" stroke-width="3"/>' +
-    '<ellipse cx="44" cy="48" rx="8" ry="11" fill="#FFF9F1" stroke="#243044" stroke-width="3"/>',
-  octopus:
-    '<ellipse cx="44" cy="34" rx="20" ry="16" fill="#E36B58" stroke="#243044" stroke-width="3"/>' +
-    '<circle cx="36" cy="32" r="2.6" fill="#243044"/><circle cx="52" cy="32" r="2.6" fill="#243044"/>' +
-    '<path d="M24 46c-6 14 6 18 8 6M32 50c-2 16 8 16 8 4M40 52c0 16 8 16 6 2M50 52c2 16 10 14 6 0M58 48c6 14 12 10 6-2M66 44c8 10 10 16 2 8" fill="none" stroke="#E36B58" stroke-width="5" stroke-linecap="round"/>',
-  pig:
-    '<ellipse cx="44" cy="48" rx="24" ry="18" fill="#F3B2A6" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M26 40 L18 24 L36 36Z" fill="#F3B2A6" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<path d="M62 40 L70 24 L52 36Z" fill="#F3B2A6" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<ellipse cx="44" cy="54" rx="10" ry="7" fill="#E36B58" stroke="#243044" stroke-width="3"/>' +
-    '<circle cx="40" cy="54" r="1.6" fill="#243044"/><circle cx="48" cy="54" r="1.6" fill="#243044"/>' +
-    '<circle cx="36" cy="46" r="2.4" fill="#243044"/><circle cx="52" cy="46" r="2.4" fill="#243044"/>',
-  queen:
-    '<path d="M14 58 L22 26 L34 46 L44 16 L54 46 L66 26 L74 58 Z" fill="#F5B942" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<rect x="14" y="56" width="60" height="12" rx="3" fill="#F5B942" stroke="#243044" stroke-width="3"/>' +
-    '<circle cx="22" cy="28" r="4" fill="#E36B58" stroke="#243044" stroke-width="2"/>' +
-    '<circle cx="44" cy="18" r="4" fill="#E36B58" stroke="#243044" stroke-width="2"/>' +
-    '<circle cx="66" cy="28" r="4" fill="#E36B58" stroke="#243044" stroke-width="2"/>',
-  rainbow:
-    '<path d="M14 62 A30 28 0 0 1 74 62" fill="none" stroke="#E36B58" stroke-width="7" stroke-linecap="round"/>' +
-    '<path d="M22 62 A22 20 0 0 1 66 62" fill="none" stroke="#F5B942" stroke-width="7" stroke-linecap="round"/>' +
-    '<path d="M30 62 A14 12 0 0 1 58 62" fill="none" stroke="#5E9A62" stroke-width="7" stroke-linecap="round"/>' +
-    '<ellipse cx="16" cy="64" rx="10" ry="7" fill="#FFF9F1" stroke="#243044" stroke-width="2"/>' +
-    '<ellipse cx="72" cy="64" rx="10" ry="7" fill="#FFF9F1" stroke="#243044" stroke-width="2"/>',
-  sun:
-    '<g stroke="#C4842A" stroke-width="4" stroke-linecap="round"><path d="M44 8v8M44 72v8M8 44h8M72 44h8M18 18l6 6M64 64l6 6M70 18l-6 6M24 64l-6 6"/></g>' +
-    '<circle cx="44" cy="44" r="16" fill="#F5B942" stroke="#243044" stroke-width="3"/>',
-  tree:
-    '<rect x="38" y="50" width="12" height="24" rx="2" fill="#C4842A" stroke="#243044" stroke-width="3"/>' +
-    '<circle cx="44" cy="36" r="20" fill="#5E9A62" stroke="#243044" stroke-width="3"/>',
-  umbrella:
-    '<path d="M12 46 A32 28 0 0 1 76 46 Z" fill="#E36B58" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M44 46 V68 q14 0 12 10" fill="none" stroke="#243044" stroke-width="3" stroke-linecap="round"/>' +
-    '<path d="M28 46 V42 M44 46 V36 M60 46 V42" fill="none" stroke="#243044" stroke-width="2"/>',
-  van:
-    '<path d="M10 50 V36 H40 L52 24 H76 V50 Z" fill="#7EB6E0" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<rect x="54" y="28" width="16" height="12" fill="#FFF9F1" stroke="#243044" stroke-width="2"/>' +
-    '<circle cx="26" cy="54" r="8" fill="#243044"/><circle cx="64" cy="54" r="8" fill="#243044"/>' +
-    '<circle cx="26" cy="54" r="3" fill="#FFF4E4"/><circle cx="64" cy="54" r="3" fill="#FFF4E4"/>',
-  whale:
-    '<ellipse cx="36" cy="52" rx="22" ry="15" fill="#7EB6E0" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M54 46 L76 32 L74 52 L76 68 Z" fill="#7EB6E0" stroke="#243044" stroke-width="3" stroke-linejoin="round"/>' +
-    '<circle cx="24" cy="48" r="2.6" fill="#243044"/>' +
-    '<path d="M28 40 C32 22 40 20 38 36" fill="none" stroke="#243044" stroke-width="3" stroke-linecap="round"/>' +
-    '<circle cx="40" cy="18" r="3.2" fill="#FFF9F1" stroke="#243044" stroke-width="2"/>' +
-    '<path d="M18 58 q10 6 20 0" fill="none" stroke="#243044" stroke-width="2" stroke-linecap="round"/>',
-  xylophone:
-    '<rect x="16" y="24" width="56" height="8" rx="2" fill="#E36B58" stroke="#243044" stroke-width="2"/>' +
-    '<rect x="20" y="36" width="50" height="8" rx="2" fill="#F5B942" stroke="#243044" stroke-width="2"/>' +
-    '<rect x="24" y="48" width="44" height="8" rx="2" fill="#5E9A62" stroke="#243044" stroke-width="2"/>' +
-    '<rect x="28" y="60" width="38" height="8" rx="2" fill="#7EB6E0" stroke="#243044" stroke-width="2"/>' +
-    '<path d="M24 14 L34 24 M64 14 L54 24" fill="none" stroke="#243044" stroke-width="3" stroke-linecap="round"/>',
-  "yo-yo":
-    '<circle cx="44" cy="32" r="16" fill="#E36B58" stroke="#243044" stroke-width="3"/>' +
-    '<circle cx="44" cy="32" r="6" fill="#F5B942" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M44 48 V66" stroke="#243044" stroke-width="3" stroke-linecap="round"/>' +
-    '<circle cx="44" cy="72" r="5" fill="none" stroke="#243044" stroke-width="3"/>',
-  zebra:
-    '<ellipse cx="38" cy="48" rx="22" ry="13" fill="#FFF9F1" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M30 42 v12 M40 40 v16 M50 42 v12" stroke="#243044" stroke-width="3"/>' +
-    '<circle cx="62" cy="36" r="11" fill="#FFF9F1" stroke="#243044" stroke-width="3"/>' +
-    '<path d="M56 28 h12 l-2 8 h-8 z" fill="#243044"/>' +
-    '<circle cx="66" cy="35" r="2" fill="#243044"/>' +
-    '<path d="M22 56 v14 M32 58 v12 M44 58 v12 M52 56 v14" stroke="#243044" stroke-width="4" stroke-linecap="round"/>',
-};
-
 var save = loadSave();
 var ui = {
   screen: "home",
@@ -382,7 +256,8 @@ function makeNumberChoices(n) {
 }
 
 function pic(word) {
-  return '<svg class="pic" viewBox="0 0 88 88" aria-hidden="true">' + (PICS[word] || "") + "</svg>";
+  var src = window.PIC_DATA && PIC_DATA[word] ? PIC_DATA[word] : "pics/" + word + ".jpg";
+  return '<img class="pic" alt="" draggable="false" src="' + src + '">';
 }
 
 function speakerIcon() {
@@ -916,6 +791,107 @@ function warmVoices() {
 }
 
 var spoken = null;
+var chimeUrl = "";
+var chimeAudio = null;
+var advanceTimer = 0;
+
+function clearAdvance() {
+  if (advanceTimer) window.clearTimeout(advanceTimer);
+  advanceTimer = 0;
+}
+
+function happyChimeUrl() {
+  if (chimeUrl) return chimeUrl;
+  var sr = 16000;
+  var dur = 0.82;
+  var n = Math.floor(sr * dur);
+  var notes = [
+    { f: 1046, t: 0, d: 0.2 },
+    { f: 1318, t: 0.12, d: 0.2 },
+    { f: 1568, t: 0.24, d: 0.22 },
+    { f: 2093, t: 0.38, d: 0.4 },
+  ];
+  var samples = new Float32Array(n);
+  var i;
+  var k;
+  for (i = 0; i < n; i++) {
+    var tt = i / sr;
+    var s = 0;
+    for (k = 0; k < notes.length; k++) {
+      var note = notes[k];
+      var local = tt - note.t;
+      if (local < 0 || local > note.d) continue;
+      var amp = local < 0.015 ? local / 0.015 : 1;
+      var tail = (note.d - local) / 0.12;
+      if (tail < 1) amp *= tail > 0 ? tail : 0;
+      s += Math.sin(2 * Math.PI * note.f * local) * amp;
+      s += Math.sin(2 * Math.PI * note.f * 2 * local) * amp * 0.18;
+    }
+    if (s > 1) s = 1;
+    if (s < -1) s = -1;
+    samples[i] = s * 0.72;
+  }
+  var buffer = new ArrayBuffer(44 + n * 2);
+  var view = new DataView(buffer);
+  function write(offset, text) {
+    var c;
+    for (c = 0; c < text.length; c++) view.setUint8(offset + c, text.charCodeAt(c));
+  }
+  write(0, "RIFF");
+  view.setUint32(4, 36 + n * 2, true);
+  write(8, "WAVE");
+  write(12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sr, true);
+  view.setUint32(28, sr * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  write(36, "data");
+  view.setUint32(40, n * 2, true);
+  for (i = 0; i < n; i++) view.setInt16(44 + i * 2, samples[i] * 32767, true);
+  var bytes = new Uint8Array(buffer);
+  var bin = "";
+  var chunk = 4096;
+  for (i = 0; i < bytes.length; i += chunk) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+  }
+  chimeUrl = "data:audio/wav;base64," + btoa(bin);
+  return chimeUrl;
+}
+
+function chime() {
+  if (!save.voice) return;
+  try {
+    if (!chimeAudio) {
+      chimeAudio = new Audio(happyChimeUrl());
+      chimeAudio.preload = "auto";
+    }
+    chimeAudio.volume = 1;
+    try {
+      chimeAudio.currentTime = 0;
+    } catch (err) {}
+    var play = chimeAudio.play();
+    if (play && play.catch) play.catch(function () {});
+  } catch (err) {}
+}
+
+function scheduleAdvance() {
+  clearAdvance();
+  var screen = ui.screen;
+  var mode = ui.mode;
+  var letter = save.letterIndex;
+  var number = save.numberIndex;
+  advanceTimer = window.setTimeout(function () {
+    advanceTimer = 0;
+    if (ui.screen !== screen || ui.mode !== "find" || mode !== "find") return;
+    if (screen === "letters" && save.letterIndex !== letter) return;
+    if (screen === "numbers" && save.numberIndex !== number) return;
+    if (!ui.findSolved) return;
+    step(1);
+  }, 2800);
+}
 
 function speak(text) {
   if (!save.voice || !text) return;
@@ -955,32 +931,6 @@ function speak(text) {
   } catch (err) {}
 }
 
-function chime() {
-  if (!save.voice) return;
-  try {
-    var AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    if (!audioCtx) audioCtx = new AC();
-    if (audioCtx.state === "suspended") {
-      var resumed = audioCtx.resume();
-      if (resumed && resumed.catch) resumed.catch(function () {});
-    }
-    var now = audioCtx.currentTime;
-    var o = audioCtx.createOscillator();
-    var g = audioCtx.createGain();
-    o.type = "sine";
-    o.frequency.setValueAtTime(523, now);
-    o.frequency.linearRampToValueAtTime(659, now + 0.12);
-    g.gain.setValueAtTime(0.0001, now);
-    g.gain.exponentialRampToValueAtTime(0.05, now + 0.03);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + 0.32);
-    o.connect(g);
-    g.connect(audioCtx.destination);
-    o.start(now);
-    o.stop(now + 0.34);
-  } catch (err) {}
-}
-
 function speakCurrent() {
   if (ui.screen === "letters") {
     var item = currentLetter();
@@ -997,6 +947,7 @@ function speakCurrent() {
 }
 
 function goHome() {
+  clearAdvance();
   ui.screen = "home";
   render();
 }
@@ -1019,6 +970,7 @@ function goNumbers() {
 
 function setMode(mode) {
   if (!mode) return;
+  clearAdvance();
   if (ui.mode === mode) {
     speakCurrent();
     return;
@@ -1030,6 +982,7 @@ function setMode(mode) {
 }
 
 function step(dir) {
+  clearAdvance();
   if (ui.screen === "letters") {
     var r = currentLetterRange();
     var i = save.letterIndex + dir;
@@ -1050,6 +1003,7 @@ function step(dir) {
 }
 
 function onAgain() {
+  clearAdvance();
   ui.choiceKey = "";
   render();
 }
@@ -1120,10 +1074,9 @@ function onPick(raw) {
   if (id === correct) {
     ui.findSolved = true;
     ui.nudge = "";
-    var line = ui.screen === "letters" ? "Yes! " + currentLetter().word + "." : "Yes! " + numberWord(id) + ".";
     render();
     chime();
-    speak(line);
+    scheduleAdvance();
   } else {
     ui.nudge = String(id);
     var first = !ui.saidWrong;

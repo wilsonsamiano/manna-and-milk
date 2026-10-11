@@ -1,6 +1,6 @@
 "use strict";
 
-var CACHE = "sunny-abc-v5";
+var CACHE = "sunny-abc-v6";
 var ASSETS = [
   "./",
   "./index.html",
@@ -292,6 +292,32 @@ var ASSETS = [
   "./voice/v278.mp3",
   "./voice/v279.mp3",
   "./voice/v280.mp3",
+  "./pics/apple.jpg",
+  "./pics/ball.jpg",
+  "./pics/cat.jpg",
+  "./pics/dog.jpg",
+  "./pics/egg.jpg",
+  "./pics/fish.jpg",
+  "./pics/goat.jpg",
+  "./pics/hat.jpg",
+  "./pics/igloo.jpg",
+  "./pics/juice.jpg",
+  "./pics/kite.jpg",
+  "./pics/leaf.jpg",
+  "./pics/moon.jpg",
+  "./pics/nest.jpg",
+  "./pics/octopus.jpg",
+  "./pics/pig.jpg",
+  "./pics/queen.jpg",
+  "./pics/rainbow.jpg",
+  "./pics/sun.jpg",
+  "./pics/tree.jpg",
+  "./pics/umbrella.jpg",
+  "./pics/van.jpg",
+  "./pics/whale.jpg",
+  "./pics/xylophone.jpg",
+  "./pics/yo-yo.jpg",
+  "./pics/zebra.jpg",
 ];
 
 self.addEventListener("install", function (event) {
