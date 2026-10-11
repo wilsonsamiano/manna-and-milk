@@ -65,7 +65,7 @@ var LETTERS = [
     "M56 32 V188",
     "M56 32 H100 C158 32 170 70 170 110 C170 158 158 188 100 188 H56",
   ]),
-  L("E", "e", "egg", "e", "E says egg.", ["M56 32 V188", "M56 32 H150", "M56 110 H128", "M56 188 H150"]),
+  L("E", "e", "egg", "eh", "E says eh. Egg.", ["M56 32 V188", "M56 32 H150", "M56 110 H128", "M56 188 H150"]),
   L("F", "f", "fish", "fff", "F says fff. Fish.", ["M56 32 V188", "M56 32 H150", "M56 110 H128"]),
   L("G", "g", "goat", "guh", "G says guh. Goat.", [
     "M150 62 C112 28 36 38 36 110 C36 182 112 196 156 160",
@@ -961,7 +961,7 @@ function speak(text, onDone) {
       } catch (err) {}
     }
     var src = CLIPS[text];
-    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=9";
+    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=10";
     spoken = new Audio(src);
     spoken.volume = 1;
     spoken.preload = "auto";
