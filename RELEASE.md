@@ -1,7 +1,7 @@
-Manna & Milk 0.3.3, still a published beta.
+Manna & Milk 0.3.4, still a published beta.
 
-- Find follows the finger on a choice even when her palm is already resting on the screen.
+- The app icon is a drawn bowl of manna and a cup of milk, made to fit the round tablet icon.
 
-It installs over 0.3.2. You do not uninstall first.
+It installs over 0.3.3. You do not uninstall first.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)
