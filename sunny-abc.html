@@ -1372,6 +1372,13 @@ function persist() {
   } catch (err) {}
 }
 
+function closeApp() {
+  if (!window.SunnyLock || !SunnyLock.closeApp) return;
+  try {
+    SunnyLock.closeApp();
+  } catch (err) {}
+}
+
 function syncTabletLock() {
   if (!window.SunnyLock) return;
   try {
@@ -1574,18 +1581,14 @@ function homeLocked() {
 
 function header(withHome) {
   var locked = homeLocked();
-  var home = withHome
-    ? '<button class="icon-btn home-btn' +
-      (locked ? " locked" : "") +
-      '" data-action="home" aria-label="' +
-      (locked ? "Home is locked." : "Home. Hold to go home.") +
-      '">' +
+  var home = withHome && !locked
+    ? '<button class="icon-btn home-btn" data-action="home" aria-label="Home. Hold to go home.">' +
       houseIcon() +
       "</button>"
     : "";
   return (
     '<header class="top' +
-    (withHome ? " with-home" : "") +
+    (withHome && !locked ? " with-home" : "") +
     '">' +
     home +
     '<button class="icon-btn sun-btn" data-action="grownups" aria-label="Grown-ups. Hold to open.">' +
@@ -2018,12 +2021,11 @@ function renderGrown() {
     "</section>" +
     '<section class="g-sec"><h2 class="g-label">Parent lock</h2>' +
     (save.pin
-      ? '<p class="g-note">The house is locked, and so is the tablet Home button. Hold the sun, enter the PIN, then tap Go home. Turn the PIN off to unlock both.</p>' +
-        (window.SunnyLock
-          ? '<p class="g-note">If the tablet Home button still leaves the app, turn on Screen pinning once. On a Fire tablet that is Settings, then Security & Privacy, then Screen pinning.</p>'
-          : "") +
-        '<div class="chips"><button class="chip" data-action="go-home">Go home</button><button class="chip" data-action="pin-change">Change PIN</button><button class="chip" data-action="pin-off">Turn off</button></div>'
-      : '<p class="g-note">Set a 4-digit PIN to lock the house and the tablet Home button. Until then, hold the house to go home.</p>' +
+      ? '<p class="g-note">The tablet Home button stays locked while a PIN is on. The house is hidden so she cannot leave a lesson. Close app leaves this tablet. The PIN stays on for the next time you open it.</p>' +
+        '<div class="chips"><button class="chip" data-action="go-home">Go home</button>' +
+        (window.SunnyLock ? '<button class="chip on" data-action="close-app">Close app</button>' : "") +
+        '<button class="chip" data-action="pin-change">Change PIN</button><button class="chip" data-action="pin-off">Turn off</button></div>'
+      : '<p class="g-note">Set a 4-digit PIN to lock the tablet Home button. Until then, hold the house to go home.</p>' +
         '<div class="chips"><button class="chip on" data-action="pin-set">Set a PIN</button></div>') +
     "</section>" +
     updateSection() +
@@ -2989,6 +2991,7 @@ function onClick(e) {
   else if (action === "pin-set") openPin("new", "");
   else if (action === "pin-change") openPin("old", "change");
   else if (action === "pin-off") openPin("old", "off");
+  else if (action === "close-app") closeApp();
   else if (action === "go-home") goHome();
   else if (action === "show-intro") openIntro();
   else if (action === "intro-next") introNext();
@@ -3519,7 +3522,7 @@ var INTRO = [
   },
   {
     title: "A PIN",
-    body: "Set a PIN if you want the house and the tablet Home button locked. Turn the PIN off to unlock them.",
+    body: "Set a PIN if you want the tablet Home button locked. The house hides while it is on. Close app, in this menu, leaves the tablet. The PIN stays on next time.",
   },
   {
     title: "Updates",

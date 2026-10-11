@@ -1,7 +1,8 @@
-Manna & Milk 0.3.6, still a published beta.
+Manna & Milk 0.3.7, still a published beta.
 
-- The home screen icon fills the circle: a bowl of manna and a cup of milk, not a tiny picture in a square.
+- Grown-ups can tap Close app to leave the tablet home screen. The PIN stays on for the next time you open it.
+- The gray house is hidden while a PIN is on. It comes back if you turn the PIN off.
 
-It installs over 0.3.5. You do not uninstall first. If the old icon stays for a moment, leave the home screen and come back.
+It installs over 0.3.6. You do not uninstall first.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)

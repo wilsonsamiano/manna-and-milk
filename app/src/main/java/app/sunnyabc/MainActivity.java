@@ -31,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private WebView webView;
     private UpdateClient updates;
     private boolean stayLocked;
+    private boolean closing;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -97,6 +98,13 @@ public class MainActivity extends AppCompatActivity {
         lockPrefs().edit().putBoolean("stay", on).apply();
         if (on) applyLock();
         else clearLock();
+    }
+
+    public void closeApp() {
+        closing = true;
+        stayLocked = false;
+        clearLock();
+        finishAndRemoveTask();
     }
 
     private SharedPreferences lockPrefs() {
@@ -179,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void comeBack() {
-        if (!stayLocked || handingOff() || isFinishing()) return;
+        if (closing || !stayLocked || handingOff() || isFinishing()) return;
         try {
             Intent intent = new Intent(this, MainActivity.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT | Intent.FLAG_ACTIVITY_SINGLE_TOP);
@@ -195,13 +203,14 @@ public class MainActivity extends AppCompatActivity {
             updates.onHostResume();
             updates.start();
         }
+        if (closing) return;
         if (stayLocked && !handingOff()) applyLock();
     }
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if (hasFocus && stayLocked && !handingOff()) applyLock();
+        if (hasFocus && !closing && stayLocked && !handingOff()) applyLock();
     }
 
     @Override

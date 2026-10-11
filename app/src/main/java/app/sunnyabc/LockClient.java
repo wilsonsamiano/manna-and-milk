@@ -22,6 +22,11 @@ public class LockClient {
     }
 
     @JavascriptInterface
+    public void closeApp() {
+        activity.runOnUiThread(() -> activity.closeApp());
+    }
+
+    @JavascriptInterface
     public String pinned() {
         ActivityManager am = (ActivityManager) activity.getSystemService(Context.ACTIVITY_SERVICE);
         if (am == null) return "0";
