@@ -13,22 +13,12 @@ public class LockClient {
 
     @JavascriptInterface
     public void pinApp() {
-        activity.runOnUiThread(() -> {
-            try {
-                activity.startLockTask();
-            } catch (RuntimeException ignored) {
-            }
-        });
+        activity.runOnUiThread(() -> activity.setKidLock(true));
     }
 
     @JavascriptInterface
     public void unpinApp() {
-        activity.runOnUiThread(() -> {
-            try {
-                activity.stopLockTask();
-            } catch (RuntimeException ignored) {
-            }
-        });
+        activity.runOnUiThread(() -> activity.setKidLock(false));
     }
 
     @JavascriptInterface

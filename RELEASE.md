@@ -1,10 +1,8 @@
-Manna & Milk 0.3.0, still a published beta.
+Manna & Milk 0.3.1, still a published beta.
 
-- Shapes and Colors are new lessons on the first page.
-- Shapes: circle, square, triangle, rectangle, star, heart, oval, and diamond. Look, Find, and Trace.
-- Colors: red, blue, yellow, green, orange, purple, pink, and brown. Look and Find.
-- Grown-ups can choose a smaller set of shapes or colors.
+- The circle is a real circle now.
+- With a PIN on, swiping up to the tablet home brings Manna & Milk back. Turn the PIN off when a grown-up needs to leave the app.
 
-It installs over 0.2.1. You do not uninstall first.
+It installs over 0.3.0. You do not uninstall first.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)

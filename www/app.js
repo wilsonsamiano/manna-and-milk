@@ -43,7 +43,7 @@ function shapeItem(name, d) {
 }
 
 var SHAPES = [
-  shapeItem("circle", "M100 40 C150 40 168 72 168 110 C168 156 148 184 100 184 C52 184 32 156 32 110 C32 72 50 40 100 40"),
+  shapeItem("circle", "M100 36 C140.8 36 174 69.2 174 110 C174 150.8 140.8 184 100 184 C59.2 184 26 150.8 26 110 C26 69.2 59.2 36 100 36 Z"),
   shapeItem("square", "M48 46 H152 V150 H48 Z"),
   shapeItem("triangle", "M100 38 L168 168 L32 168 Z"),
   shapeItem("rectangle", "M28 62 H172 V150 H28 Z"),

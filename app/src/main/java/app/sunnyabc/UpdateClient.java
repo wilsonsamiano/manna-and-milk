@@ -67,6 +67,10 @@ public class UpdateClient {
         return statusJson;
     }
 
+    public boolean isHandingOff() {
+        return handoff != 0 || resumePin;
+    }
+
     public void onHostResume() {
         if (handoff == 1) {
             if (canInstall()) {
