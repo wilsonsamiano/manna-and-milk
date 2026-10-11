@@ -174,6 +174,49 @@ button:focus-visible {
   font-weight: 800;
 }
 
+.mark {
+  width: min(46vw, 200px);
+  height: auto;
+  display: block;
+  margin: 0 auto 10px;
+  border-radius: 28px;
+}
+
+.intro {
+  width: min(100%, 640px);
+  margin: 0 auto;
+  padding: 16px 18px 24px;
+}
+
+.intro-count {
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  opacity: 0.6;
+}
+
+.intro-body {
+  font-size: clamp(22px, 3.4vw, 30px);
+  line-height: 1.35;
+  text-align: center;
+  margin: 8px 0 18px;
+}
+
+.intro-actions {
+  justify-content: center;
+}
+
+.notes {
+  margin: 8px 0 12px;
+  padding-left: 22px;
+  font-size: 18px;
+  line-height: 1.4;
+}
+
+.notes li + li {
+  margin-top: 6px;
+}
+
 .lede {
   text-align: center;
   font-size: clamp(20px, 3vw, 28px);
@@ -804,6 +847,11 @@ button.qty-ten.on {
 }
 
 @media (orientation: landscape) {
+  .mark {
+    width: min(22vh, 150px);
+    margin-bottom: 4px;
+  }
+
   .upper,
   .pair.both .upper,
   .pair.both .lower,

@@ -154,6 +154,7 @@ var ui = {
   pinNote: "",
   pinBack: "",
   talking: false,
+  introStep: 0,
 };
 var trace = {
   drawing: false,
@@ -192,6 +193,8 @@ function defaults() {
     numberIndex: 1,
     letterForm: "both",
     pin: "",
+    introDone: false,
+    seenNotes: "",
   };
 }
 
@@ -211,6 +214,8 @@ function loadSave() {
         if (typeof p.numberIndex === "number") d.numberIndex = p.numberIndex | 0;
         if (p.letterForm === "big" || p.letterForm === "small" || p.letterForm === "both") d.letterForm = p.letterForm;
         if (/^\d{4}$/.test(p.pin || "")) d.pin = p.pin;
+        if (p.introDone === true) d.introDone = true;
+        if (typeof p.seenNotes === "string") d.seenNotes = p.seenNotes;
       }
     }
   } catch (err) {}
@@ -545,7 +550,7 @@ function renderHome() {
   return (
     '<main class="screen" data-screen="home">' +
     header(false) +
-    '<div class="home-main"><h1 class="brand">Manna & Milk</h1><p class="lede">Little lessons</p><div class="pick">' +
+    '<div class="home-main"><img class="mark" alt="" src="mark.jpg"><h1 class="brand">Manna & Milk</h1><p class="lede">Little lessons</p><div class="pick">' +
     '<button class="pick-card" data-action="letters"><span class="pair pair-card"><span class="upper">A</span><span class="lower">a</span></span><span class="pick-label">Letters</span></button>' +
     '<button class="pick-card" data-action="numbers"><span class="num">123</span><span class="pick-label">Numbers</span></button>' +
     "</div></div>" +
@@ -771,6 +776,7 @@ function renderGrown() {
     header(true) +
     '<div class="grown-body"><h1 class="g-title">For grown-ups</h1>' +
     "<p class=\"g-note\">Letters and numbers are the first lessons. More will be added. All letters are on to start. Nothing is timed, and there is no score.</p>" +
+    '<div class="chips"><button class="chip" data-action="show-intro">Show the tour</button></div>' +
     '<section class="g-sec"><h2 class="g-label">Letters</h2><div class="chips">' +
     chips(LETTER_RANGES, save.letterRange, "letter-range") +
     '</div></section>' +
@@ -893,6 +899,8 @@ function setTitle() {
   else if (ui.screen === "numbers") t = "Manna & Milk · " + currentNumber();
   else if (ui.screen === "grownups") t = "Manna & Milk · Grown-ups";
   else if (ui.screen === "pin") t = "Manna & Milk · PIN";
+  else if (ui.screen === "intro") t = "Manna & Milk · For grown-ups";
+  else if (ui.screen === "whatsnew") t = "Manna & Milk · What's new";
   document.title = t;
 }
 
@@ -903,6 +911,8 @@ function render() {
   if (ui.screen === "home") html = renderHome();
   else if (ui.screen === "grownups") html = renderGrown();
   else if (ui.screen === "pin") html = renderPin();
+  else if (ui.screen === "intro") html = renderIntro();
+  else if (ui.screen === "whatsnew") html = renderWhatsNew();
   else html = renderPlay();
   app.innerHTML = html;
   setTitle();
@@ -1142,7 +1152,8 @@ function speakCurrent() {
 
 function goHome() {
   clearAdvance();
-  ui.screen = "home";
+  if (save.introDone && unseenNotes()) ui.screen = "whatsnew";
+  else ui.screen = "home";
   render();
 }
 
@@ -1369,6 +1380,11 @@ function onClick(e) {
   else if (action === "pin-change") openPin("old", "change");
   else if (action === "pin-off") openPin("old", "off");
   else if (action === "go-home") goHome();
+  else if (action === "show-intro") openIntro();
+  else if (action === "intro-next") introNext();
+  else if (action === "intro-back") introBack();
+  else if (action === "intro-close") closeIntro();
+  else if (action === "notes-done") dismissNotes();
 }
 
 function clearHold() {
@@ -1869,6 +1885,154 @@ function readUpdate() {
   }
 }
 
+var INTRO = [
+  {
+    title: "For grown-ups",
+    body: "This short tour is only for you. She can play when you finish.",
+  },
+  {
+    title: "Two lessons",
+    body: "Letters and Numbers are on the first page. More lessons will be added later.",
+  },
+  {
+    title: "How she plays",
+    body: "Look is for seeing and hearing. Find, Trace, and Count wait until she finishes. Next stays off while the voice is still talking.",
+  },
+  {
+    title: "Sun and house",
+    body: "Hold the sun to open grown-ups. Hold the house to go home. A tap on the house does nothing.",
+  },
+  {
+    title: "A PIN",
+    body: "Set a PIN if you want the house and the tablet Home button locked. Turn the PIN off to unlock them.",
+  },
+  {
+    title: "Updates",
+    body: "When an update is ready, grown-ups lists what changed. Install update puts it on top of this copy. You do not uninstall.",
+  },
+];
+
+function openIntro() {
+  ui.introFrom = ui.screen;
+  ui.introStep = 0;
+  ui.screen = "intro";
+  render();
+}
+
+function introBack() {
+  if (ui.introStep > 0) ui.introStep -= 1;
+  render();
+}
+
+function introNext() {
+  if (ui.introStep < INTRO.length - 1) {
+    ui.introStep += 1;
+    render();
+    return;
+  }
+  var first = !save.introDone;
+  save.introDone = true;
+  persist();
+  if (first && unseenNotes()) ui.screen = "whatsnew";
+  else if (!first) ui.screen = ui.introFrom === "grownups" ? "grownups" : "home";
+  else ui.screen = "home";
+  render();
+}
+
+function closeIntro() {
+  ui.screen = "grownups";
+  render();
+}
+
+function renderIntro() {
+  var step = ui.introStep || 0;
+  if (step < 0) step = 0;
+  if (step >= INTRO.length) step = INTRO.length - 1;
+  var page = INTRO[step];
+  var last = step === INTRO.length - 1;
+  var buttons = "";
+  if (step > 0) buttons += '<button class="chip" data-action="intro-back">Back</button>';
+  if (save.introDone) buttons += '<button class="chip" data-action="intro-close">Close</button>';
+  buttons +=
+    '<button class="chip on" data-action="intro-next">' + (last ? "She can play" : "Next") + "</button>";
+  return (
+    '<main class="screen" data-screen="intro"><div class="intro">' +
+    '<img class="mark" alt="" src="mark.jpg">' +
+    '<p class="intro-count">' +
+    (step + 1) +
+    " of " +
+    INTRO.length +
+    "</p>" +
+    '<h1 class="g-title">' +
+    page.title +
+    '</h1><p class="intro-body">' +
+    page.body +
+    '</p><div class="chips intro-actions">' +
+    buttons +
+    "</div></div></main>"
+  );
+}
+
+function noteItems(text) {
+  var lines = String(text || "").split("\n");
+  var out = [];
+  var i;
+  for (i = 0; i < lines.length; i++) {
+    var t = lines[i].replace(/^\s+|\s+$/g, "");
+    if (!t || t.charAt(0) === "#") continue;
+    if (t.toLowerCase().indexOf("buy me a coffee") !== -1) continue;
+    t = t.replace(/^[-*]\s+/, "");
+    t = t.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+    if (!t) continue;
+    out.push(t);
+  }
+  return out;
+}
+
+function noteList(text) {
+  var items = noteItems(text);
+  if (!items.length) return "";
+  var html = '<ul class="notes">';
+  var i;
+  for (i = 0; i < items.length; i++) {
+    html += "<li>" + escHtml(items[i]) + "</li>";
+  }
+  return html + "</ul>";
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">");
+}
+
+function unseenNotes() {
+  if (!save.introDone || !window.SunnyUpdate) return false;
+  var info = readUpdate();
+  if (!info || info.state !== "current" || !info.notes || !info.current) return false;
+  return save.seenNotes !== info.current;
+}
+
+function renderWhatsNew() {
+  var info = readUpdate();
+  return (
+    '<main class="screen" data-screen="whatsnew"><div class="intro">' +
+    '<img class="mark" alt="" src="mark.jpg">' +
+    '<h1 class="g-title">What\'s new</h1>' +
+    '<p class="intro-body">This copy' +
+    (info.current ? " is " + escHtml(info.current) + "." : ".") +
+    "</p>" +
+    noteList(info.notes) +
+    '<div class="chips intro-actions"><button class="chip on" data-action="notes-done">Continue</button></div></div></main>'
+  );
+}
+
+function dismissNotes() {
+  var info = readUpdate();
+  if (info.current) save.seenNotes = info.current;
+  persist();
+  ui.screen = "home";
+  render();
+}
+
 function updateHomeNote() {
   var info = readUpdate();
   if (info.state !== "ready") return "";
@@ -1895,11 +2059,17 @@ function updateSection() {
     btn += '<button class="chip on" data-action="install-update">Install update</button>';
   }
   btn += '<button class="chip" data-action="check-update">Check for updates</button>';
-  return '<section class="g-sec"><h2 class="g-label">Updates</h2><p class="g-note">' + note + "</p>" + btn + "</section>";
+  return '<section class="g-sec"><h2 class="g-label">Updates</h2><p class="g-note">' + note + "</p>" + noteList(info.notes) + btn + "</section>";
 }
 
 window.sunnyUpdateChanged = function () {
-  if (ui.screen === "grownups" || ui.screen === "home") render();
+  if (!save.introDone) return;
+  if (ui.screen === "home" && unseenNotes()) {
+    ui.screen = "whatsnew";
+    render();
+    return;
+  }
+  if (ui.screen === "grownups" || ui.screen === "home" || ui.screen === "whatsnew") render();
 };
 
 function registerWorker() {
@@ -1941,6 +2111,7 @@ function init() {
   }
   registerWorker();
   syncTabletLock();
+  if (!save.introDone) ui.screen = "intro";
   render();
 }
 

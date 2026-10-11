@@ -1,15 +1,15 @@
 "use strict";
 
-var CACHE = "sunny-abc-v8";
+var CACHE = "sunny-abc-v11";
 var ASSETS = [
   "./",
   "./index.html",
   "./app.css",
   "./app.js",
   "./manifest.webmanifest",
-  "./icon.svg",
   "./icon-192.png",
   "./icon-512.png",
+  "./mark.jpg",
   "./voice-map.js",
   "./voice/v000.mp3",
   "./voice/v001.mp3",

@@ -34,6 +34,7 @@ public class UpdateClient {
     private volatile String statusJson;
     private volatile boolean busy;
     private String readyVersion = "";
+    private String readyNotes = "";
     private boolean asked;
     private boolean forceOffer;
     private long lastCheck;
@@ -45,7 +46,7 @@ public class UpdateClient {
         this.webView = webView;
         this.apkFile = new File(activity.getCacheDir(), "sunny-update.apk");
         this.currentVersion = readVersion();
-        this.statusJson = json("checking", "");
+        this.statusJson = json("checking", "", "");
     }
 
     public void attach() {
@@ -91,7 +92,7 @@ public class UpdateClient {
         if (force) {
             asked = false;
             forceOffer = true;
-            setStatus(json("checking", ""));
+            setStatus(json("checking", "", ""));
         }
         new Thread(() -> {
             try {
@@ -108,17 +109,22 @@ public class UpdateClient {
             conn = open(API);
             int code = conn.getResponseCode();
             if (code < 200 || code >= 300) {
-                setStatus(json("error", ""));
+                setStatus(json("error", "", ""));
                 return;
             }
             String body = read(conn.getInputStream());
             JSONArray releases = new JSONArray(body);
             String bestTag = "";
             String bestUrl = "";
+            String bestNotes = "";
+            String sameNotes = "";
+            String currentPretty = pretty(currentVersion);
             int i;
             for (i = 0; i < releases.length(); i++) {
                 JSONObject rel = releases.getJSONObject(i);
                 String tag = rel.optString("tag_name", "");
+                String notes = rel.optString("body", "");
+                if (pretty(tag).equals(currentPretty)) sameNotes = notes;
                 if (!newer(tag, currentVersion)) continue;
                 if (bestTag.length() > 0 && !newer(tag, bestTag)) continue;
                 JSONArray assets = rel.optJSONArray("assets");
@@ -131,27 +137,29 @@ public class UpdateClient {
                     if (url.length() == 0) continue;
                     bestTag = tag;
                     bestUrl = url;
+                    bestNotes = notes;
                 }
             }
+            readyNotes = bestNotes;
             if (bestUrl.length() == 0) {
-                setStatus(json("current", ""));
+                setStatus(json("current", "", sameNotes));
                 return;
             }
             String pretty = pretty(bestTag);
             if (pretty.equals(readyVersion) && looksLikeApk(apkFile)) {
-                setStatus(json("ready", pretty));
+                setStatus(json("ready", pretty, readyNotes));
                 return;
             }
-            setStatus(json("downloading", pretty));
+            setStatus(json("downloading", pretty, ""));
             download(bestUrl);
             if (!looksLikeApk(apkFile)) {
-                setStatus(json("error", pretty));
+                setStatus(json("error", pretty, ""));
                 return;
             }
             readyVersion = pretty;
-            setStatus(json("ready", pretty));
+            setStatus(json("ready", pretty, readyNotes));
         } catch (Exception err) {
-            setStatus(json("error", ""));
+            setStatus(json("error", "", ""));
         } finally {
             if (conn != null) conn.disconnect();
         }
@@ -199,9 +207,12 @@ public class UpdateClient {
         if (!forceOffer && readyVersion.equals(prefs.getString("skipped", ""))) return;
         forceOffer = false;
         asked = true;
+        String message = "Version " + readyVersion + " installs over this one. You do not uninstall the old app.";
+        String listed = plainNotes(readyNotes);
+        if (listed.length() > 0) message = message + "\n\n" + listed;
         new AlertDialog.Builder(activity)
                 .setTitle("A newer Manna & Milk is ready")
-                .setMessage("Version " + readyVersion + " installs over this one. You do not uninstall the old app.")
+                .setMessage(message)
                 .setPositiveButton("Update", (d, w) -> openInstaller())
                 .setNegativeButton("Not now", (d, w) -> prefs.edit().putString("skipped", readyVersion).apply())
                 .show();
@@ -293,8 +304,33 @@ public class UpdateClient {
         }
     }
 
-    private String json(String state, String version) {
-        return "{\"state\":\"" + state + "\",\"version\":\"" + version + "\",\"current\":\"" + currentVersion + "\"}";
+    private String json(String state, String version, String notes) {
+        return "{\"state\":\"" + esc(state) + "\",\"version\":\"" + esc(version) + "\",\"current\":\""
+                + esc(currentVersion) + "\",\"notes\":\"" + esc(notes) + "\"}";
+    }
+
+    private static String esc(String s) {
+        if (s == null) return "";
+        return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\r", "").replace("\n", "\\n");
+    }
+
+    private static String plainNotes(String body) {
+        if (body == null || body.length() == 0) return "";
+        String[] lines = body.split("\n");
+        StringBuilder out = new StringBuilder();
+        int i;
+        for (i = 0; i < lines.length; i++) {
+            String t = lines[i].trim();
+            if (t.startsWith("#")) continue;
+            if (t.toLowerCase().contains("buy me a coffee")) continue;
+            t = t.replaceFirst("^[-*]\\s+", "");
+            t = t.replaceAll("\\[([^\\]]+)\\]\\([^)]+\\)", "$1");
+            if (t.length() == 0) continue;
+            if (out.length() > 0) out.append("\n");
+            out.append("• ").append(t);
+            if (out.length() > 700) break;
+        }
+        return out.toString();
     }
 
     private static HttpURLConnection open(String address) throws Exception {
