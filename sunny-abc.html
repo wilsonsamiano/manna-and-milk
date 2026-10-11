@@ -507,78 +507,63 @@ button:focus-visible {
   width: min(100%, 480px);
 }
 
-.dots {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-}
-
-.dot,
-button.dot {
-  width: 52px;
-  height: 52px;
-  border-radius: 50%;
-  padding: 0;
-  border: 3px solid var(--ink);
-  background: var(--card);
-  box-shadow: 0 3px 0 var(--edge);
-}
-
-.dot-lg,
-button.dot-lg {
-  width: 72px;
-  height: 72px;
-}
-
-.dot.on,
-button.dot.on {
-  background: var(--sun);
-}
-
-.bars {
+.qty-groups {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  gap: 6px;
+  width: min(100%, 680px);
+}
+
+.qty-row,
+.qty-ten,
+button.qty-ten {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 4px;
   width: 100%;
 }
 
-.ten {
-  width: min(100%, 460px);
-  height: 52px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 12px 0 8px;
+.qty-row-lg {
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+  max-width: 560px;
+  justify-content: center;
+}
+
+.qty-one,
+button.qty-one {
+  padding: 3px;
+  border-radius: 14px;
+  background: var(--card);
+  min-width: 0;
+}
+
+.qty-ten,
+button.qty-ten {
+  padding: 4px;
+  border-radius: 16px;
   background: var(--card);
 }
 
-.ten-sm {
-  height: 42px;
-}
-
-.ten-pips {
-  flex: 1;
-  height: 26px;
-  border-radius: 13px;
-  border: 2px solid var(--ink);
-  background-color: var(--card);
-  background-image: radial-gradient(circle, var(--ink) 4px, transparent 5px);
-  background-size: 10% 100%;
-  background-repeat: repeat-x;
-  background-position: center;
-}
-
-.ten.on {
+.qty-one.on,
+.qty-ten.on,
+button.qty-one.on,
+button.qty-ten.on {
   background: var(--sun);
 }
 
-.ten-label {
-  width: 2ch;
-  font-size: 20px;
-  font-weight: 800;
-  text-align: right;
+.qty-one:not(.on) .qty-pic,
+.qty-ten:not(.on) .qty-pic {
+  opacity: 0.35;
+}
+
+.qty-pic {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+  display: block;
+  pointer-events: none;
 }
 
 .place {
@@ -1067,15 +1052,6 @@ function numberWord(n) {
   return o ? TENS[t] + "-" + ONES[o] : TENS[t];
 }
 
-function placeCaption(n) {
-  if (n === 100) return "10 tens";
-  var t = Math.floor(n / 10);
-  var o = n % 10;
-  var tens = t === 1 ? "1 ten" : t + " tens";
-  if (!o) return tens;
-  return tens + " and " + (o === 1 ? "1 one" : o + " ones");
-}
-
 function shuffle(list) {
   var a = list.slice();
   var i, j, tmp;
@@ -1112,9 +1088,23 @@ function makeNumberChoices(n) {
   return shuffle([n, near[0], near[1]]);
 }
 
+function picSrc(word) {
+  return window.PIC_DATA && PIC_DATA[word] ? PIC_DATA[word] : "pics/" + word + ".jpg";
+}
+
 function pic(word) {
-  var src = window.PIC_DATA && PIC_DATA[word] ? PIC_DATA[word] : "pics/" + word + ".jpg";
-  return '<img class="pic" alt="" draggable="false" src="' + src + '">';
+  return '<img class="pic" alt="" draggable="false" src="' + picSrc(word) + '">';
+}
+
+function qtyImg(word) {
+  return '<img class="qty-pic" alt="" draggable="false" src="' + picSrc(word) + '">';
+}
+
+function countWord(group) {
+  var i = group;
+  if (i < 0) i = 0;
+  if (i > 25) i = 25;
+  return LETTERS[i].word;
 }
 
 function speakerIcon() {
@@ -1212,69 +1202,76 @@ function wordHtml(word) {
 
 function quantityHtml(n, interactive) {
   var i;
+  var k;
   var html = "";
   if (n <= 10) {
-    html = '<div class="dots">';
-    var lg = n <= 5 ? " dot-lg" : "";
+    var word = countWord(0);
+    html = '<div class="qty-row qty-row-lg">';
     for (i = 0; i < n; i++) {
       var on = !interactive || ui.countTapped["d" + i];
       if (interactive) {
         html +=
-          '<button class="dot' +
-          lg +
+          '<button class="qty-one' +
           (on ? " on" : "") +
           '" data-action="dot" data-i="' +
           i +
-          '" aria-label="Dot ' +
-          (i + 1) +
-          '"></button>';
+          '" aria-label="' +
+          word +
+          '">' +
+          qtyImg(word) +
+          "</button>";
       } else {
-        html += '<span class="dot' + lg + ' on"></span>';
+        html += '<span class="qty-one on">' + qtyImg(word) + "</span>";
       }
     }
     return html + "</div>";
   }
   var tens = Math.floor(n / 10);
   var ones = n % 10;
-  if (!interactive) html += '<p class="place">' + placeCaption(n) + "</p>";
-  html += '<div class="bars">';
-  var sm = tens >= 8 ? " ten-sm" : "";
+  html = '<div class="qty-groups">';
   for (i = 0; i < tens; i++) {
+    var rowWord = countWord(i);
     var ton = !interactive || ui.countTapped["t" + i];
-    var inner = '<span class="ten-pips"></span><span class="ten-label">10</span>';
+    var cells = "";
+    for (k = 0; k < 10; k++) cells += qtyImg(rowWord);
     if (interactive) {
       html +=
-        '<button class="ten' +
-        sm +
+        '<button class="qty-ten' +
         (ton ? " on" : "") +
         '" data-action="ten" data-i="' +
         i +
-        '" aria-label="Ten">' +
-        inner +
+        '" aria-label="Ten ' +
+        rowWord +
+        '">' +
+        cells +
         "</button>";
     } else {
-      html += '<div class="ten' + sm + ' on">' + inner + "</div>";
+      html += '<div class="qty-ten on">' + cells + "</div>";
     }
   }
-  html += "</div>";
   if (ones) {
-    html += '<div class="dots dots-ones">';
+    var oneWord = countWord(tens);
+    html += '<div class="qty-row">';
     for (i = 0; i < ones; i++) {
       var oon = !interactive || ui.countTapped["o" + i];
       if (interactive) {
         html +=
-          '<button class="dot' +
+          '<button class="qty-one' +
           (oon ? " on" : "") +
           '" data-action="one" data-i="' +
           i +
-          '" aria-label="One"></button>';
+          '" aria-label="' +
+          oneWord +
+          '">' +
+          qtyImg(oneWord) +
+          "</button>";
       } else {
-        html += '<span class="dot on"></span>';
+        html += '<span class="qty-one on">' + qtyImg(oneWord) + "</span>";
       }
     }
     html += "</div>";
   }
-  return html;
+  return html + "</div>";
 }
 
 function renderHome() {
@@ -1402,7 +1399,7 @@ function renderCount(n) {
   var feedback = ui.countDone ? "Yes! " + numberWord(n) : "";
   return (
     '<div class="stage"><div class="count-wrap"><p class="prompt">' +
-    (n <= 10 ? "Tap each dot" : "Tap each block") +
+    (n <= 10 ? "Tap each apple" : "Tap each row") +
     '</p><p class="tally" aria-live="polite">' +
     tally +
     '</p><div class="qty">' +
