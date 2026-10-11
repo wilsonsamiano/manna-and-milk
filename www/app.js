@@ -961,7 +961,7 @@ function speak(text, onDone) {
       } catch (err) {}
     }
     var src = CLIPS[text];
-    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=10";
+    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=11";
     spoken = new Audio(src);
     spoken.volume = 1;
     spoken.preload = "auto";
