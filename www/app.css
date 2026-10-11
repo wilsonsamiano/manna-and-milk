@@ -404,14 +404,20 @@ button:focus-visible {
   background: var(--card);
 }
 
+.trace-wrap,
+.trace-card,
+.trace-board {
+  touch-action: none;
+}
+
 .trace-card {
-  width: min(100%, 420px);
-  height: min(58vh, 460px);
+  width: min(100%, 480px);
+  height: min(64vh, 520px);
   background: var(--card);
   border: 3px solid var(--ink);
   border-radius: 28px;
   box-shadow: 0 4px 0 var(--edge);
-  padding: 6px;
+  padding: 8px;
 }
 
 .trace-board {
@@ -419,16 +425,21 @@ button:focus-visible {
   height: 100%;
   display: block;
   touch-action: none;
+  pointer-events: bounding-box;
 }
 
 .trace-board * {
   pointer-events: none;
 }
 
+.trace-board .hit {
+  pointer-events: all;
+}
+
 .guide {
   fill: none;
   stroke: var(--line);
-  stroke-width: 26;
+  stroke-width: 36;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -454,7 +465,7 @@ button:focus-visible {
 .draw-line {
   fill: none;
   stroke: var(--coral-deep);
-  stroke-width: 16;
+  stroke-width: 22;
   stroke-linecap: round;
   stroke-linejoin: round;
 }

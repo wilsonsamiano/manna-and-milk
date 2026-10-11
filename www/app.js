@@ -2,8 +2,8 @@
 
 var KEY = "sunny-abc-v1";
 var SVGNS = "http://www.w3.org/2000/svg";
-var TRACE_RADIUS = 38;
-var TRACE_NEED = 0.5;
+var TRACE_RADIUS = 56;
+var TRACE_NEED = 0.32;
 
 var LETTER_RANGES = [
   { id: "A-Z", label: "All letters", from: 0, to: 25 },
@@ -522,7 +522,7 @@ function renderTrace(item) {
     item.lower +
     '</span></p><div class="trace-card"><svg class="trace-board" viewBox="0 0 200 220" role="img" aria-label="Trace the letter ' +
     item.ch +
-    '"><g class="guides">' +
+    '"><rect class="hit" x="0" y="0" width="200" height="220" fill="#fff" fill-opacity="0"></rect><g class="guides">' +
     paths +
     '</g><g class="arrows"></g><g class="ink"></g><g class="steps"></g></svg></div><p class="feedback" role="status">Follow the arrows</p>' +
     againBtn() +
@@ -1315,7 +1315,7 @@ function setupTrace() {
   trace.guides = guides;
   trace.ink = svg.querySelector(".ink");
   for (i = 0; i < guides.length; i++) {
-    trace.samples.push(samplePath(guides[i], 12));
+    trace.samples.push(samplePath(guides[i], 8));
     trace.done.push(false);
     addArrow(arrows, guides[i]);
     addStep(steps, guides[i], i + 1, placed);
@@ -1398,8 +1398,8 @@ function addPoint(e, svg) {
     var dx = p.x - last.x;
     var dy = p.y - last.y;
     var dist = dx * dx + dy * dy;
-    if (dist < 4) return;
-    if (dist > 1600) {
+    if (dist < 1) return;
+    if (dist > 6400) {
       pts = beginStroke();
     } else if (dist > 16) trace.moved = true;
   }
@@ -1416,7 +1416,8 @@ function onDown(e) {
     return;
   }
   if (ui.screen === "letters" && ui.mode === "trace") {
-    var svg = e.target.closest ? e.target.closest(".trace-board") : null;
+    var card = e.target.closest ? e.target.closest(".trace-card") : null;
+    var svg = card ? card.querySelector(".trace-board") : null;
     if (svg) startDraw(e, svg);
   }
 }
@@ -1430,7 +1431,11 @@ function onMove(e) {
   var svg = document.querySelector(".trace-board");
   if (!svg) return;
   if (e.preventDefault) e.preventDefault();
-  addPoint(e, svg);
+  var list = e.getCoalescedEvents ? e.getCoalescedEvents() : null;
+  if (list && list.length) {
+    var i;
+    for (i = 0; i < list.length; i++) addPoint(list[i], svg);
+  } else addPoint(e, svg);
 }
 
 function endDraw(e) {
