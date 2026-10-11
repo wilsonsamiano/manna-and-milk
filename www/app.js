@@ -6,17 +6,19 @@ var TRACE_RADIUS = 38;
 var TRACE_NEED = 0.5;
 
 var LETTER_RANGES = [
+  { id: "A-Z", label: "All letters", from: 0, to: 25 },
   { id: "A-E", label: "A to E", from: 0, to: 4 },
   { id: "F-J", label: "F to J", from: 5, to: 9 },
   { id: "K-O", label: "K to O", from: 10, to: 14 },
   { id: "P-T", label: "P to T", from: 15, to: 19 },
   { id: "U-Z", label: "U to Z", from: 20, to: 25 },
-  { id: "A-Z", label: "All letters", from: 0, to: 25 },
 ];
 
 var NUMBER_RANGES = [
   { id: "1-5", label: "1 to 5", from: 1, to: 5 },
   { id: "1-10", label: "1 to 10", from: 1, to: 10 },
+  { id: "1-50", label: "1 to 50", from: 1, to: 50 },
+  { id: "1-100", label: "1 to 100", from: 1, to: 100 },
   { id: "11-20", label: "11 to 20", from: 11, to: 20 },
   { id: "21-40", label: "21 to 40", from: 21, to: 40 },
   { id: "41-70", label: "41 to 70", from: 41, to: 70 },
@@ -143,10 +145,10 @@ function rangeById(list, id) {
 
 function defaults() {
   return {
-    v: 1,
+    v: 2,
     voice: true,
     theme: "auto",
-    letterRange: "A-E",
+    letterRange: "A-Z",
     numberRange: "1-10",
     letterIndex: 0,
     numberIndex: 1,
@@ -163,6 +165,7 @@ function loadSave() {
         if (p.voice === false) d.voice = false;
         if (p.theme === "light" || p.theme === "dark" || p.theme === "auto") d.theme = p.theme;
         if (rangeById(LETTER_RANGES, p.letterRange)) d.letterRange = p.letterRange;
+        if ((p.v || 1) < 2 && d.letterRange === "A-E") d.letterRange = "A-Z";
         if (rangeById(NUMBER_RANGES, p.numberRange)) d.numberRange = p.numberRange;
         if (typeof p.letterIndex === "number") d.letterIndex = p.letterIndex | 0;
         if (typeof p.numberIndex === "number") d.numberIndex = p.numberIndex | 0;
@@ -173,6 +176,9 @@ function loadSave() {
   if (d.letterIndex < lr.from || d.letterIndex > lr.to) d.letterIndex = lr.from;
   var nr = rangeById(NUMBER_RANGES, d.numberRange);
   if (d.numberIndex < nr.from || d.numberIndex > nr.to) d.numberIndex = nr.from;
+  try {
+    localStorage.setItem(KEY, JSON.stringify(d));
+  } catch (err) {}
   return d;
 }
 
@@ -653,7 +659,7 @@ function renderGrown() {
     '<main class="screen" data-screen="grownups">' +
     header(true) +
     '<div class="grown-body"><h1 class="g-title">For grown-ups</h1>' +
-    "<p class=\"g-note\">Pick a small set. Look comes first. Find, trace, and count are there when you want them. Nothing is timed, and there is no score.</p>" +
+    "<p class=\"g-note\">All letters are on to start. Pick a smaller set any time. Nothing is timed, and there is no score.</p>" +
     '<section class="g-sec"><h2 class="g-label">Letters</h2><div class="chips">' +
     chips(LETTER_RANGES, save.letterRange, "letter-range") +
     "</div></section>" +

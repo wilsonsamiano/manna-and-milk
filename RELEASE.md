@@ -1,10 +1,9 @@
-Sunny ABC 0.1.4, still a published beta.
+Sunny ABC 0.1.5, still a published beta.
 
 What changed:
-- Spoken words start a moment later, so the tablet does not clip the first sound.
-- The voice is a little slower, so words do not run together.
-- Letters sit above the word instead of covering it.
+- Letters start on the whole alphabet.
+- Numbers can be 1 to 50 or 1 to 100, as well as the smaller sets.
 
-It installs over 0.1.3. You do not uninstall first. If the app already offered an update, tap Update. Or hold the sun and tap Install update.
+It installs over 0.1.4. You do not uninstall first. Tap Update, or hold the sun and tap Install update.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)
