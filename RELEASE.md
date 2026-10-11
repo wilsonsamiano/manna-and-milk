@@ -1,7 +1,7 @@
-Manna & Milk 0.3.4, still a published beta.
+Manna & Milk 0.3.5, still a published beta.
 
-- The app icon is a drawn bowl of manna and a cup of milk, made to fit the round tablet icon.
+- The grown-up PIN takes each number you press, even during a Find lesson.
 
-It installs over 0.3.3. You do not uninstall first.
+It installs over 0.3.4. You do not uninstall first.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)

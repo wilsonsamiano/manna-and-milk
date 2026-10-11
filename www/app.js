@@ -1657,8 +1657,13 @@ function onOne(raw) {
   afterCount();
 }
 
-function findResting(e) {
+function findLive() {
   if (ui.mode !== "find" || challengeDone()) return false;
+  return ui.screen === "letters" || ui.screen === "numbers" || ui.screen === "shapes" || ui.screen === "colors";
+}
+
+function findResting(e) {
+  if (!findLive()) return false;
   var node = e.target && e.target.closest ? e.target : null;
   if (node && node.closest && node.closest(".choice, [data-action='home'], [data-action='grownups']")) return false;
   if (e.preventDefault) e.preventDefault();
@@ -1688,8 +1693,72 @@ function markFingersPalm() {
   for (k in fingers) fingers[k].palm = true;
 }
 
+var pinTouch = {};
+var skipPinClick = false;
+
+function pinKeyAt(x, y) {
+  var el = document.elementFromPoint(x, y);
+  if (!el || !el.closest) return null;
+  return el.closest(".pin-key");
+}
+
+function applyPinKey(action, digit, fromClick) {
+  if (fromClick && skipPinClick) {
+    skipPinClick = false;
+    return;
+  }
+  if (!fromClick) skipPinClick = true;
+  if (action === "pin-digit") onPinDigit(digit);
+  else if (action === "pin-del") onPinDel();
+  else if (action === "pin-cancel") closePin();
+}
+
+function onPinTouchStart(e) {
+  var i;
+  var t;
+  var key;
+  var hit = false;
+  for (i = 0; i < e.changedTouches.length; i++) {
+    t = e.changedTouches[i];
+    key = pinKeyAt(t.clientX, t.clientY);
+    if (!key) continue;
+    hit = true;
+    pinTouch[t.identifier] = {
+      action: key.getAttribute("data-action"),
+      digit: key.getAttribute("data-digit") || "",
+      x: t.clientX,
+      y: t.clientY,
+    };
+  }
+  if (hit && e.cancelable) e.preventDefault();
+}
+
+function onPinTouchEnd(e) {
+  var i;
+  var t;
+  var start;
+  var key;
+  var dx;
+  var dy;
+  for (i = 0; i < e.changedTouches.length; i++) {
+    t = e.changedTouches[i];
+    start = pinTouch[t.identifier];
+    delete pinTouch[t.identifier];
+    if (!start || ui.screen !== "pin") continue;
+    dx = t.clientX - start.x;
+    dy = t.clientY - start.y;
+    if (dx * dx + dy * dy > 3600) continue;
+    key = pinKeyAt(t.clientX, t.clientY);
+    if (key && key.getAttribute("data-action") === start.action) applyPinKey(start.action, start.digit, false);
+  }
+}
+
 function onFindTouchStart(e) {
-  if (ui.mode !== "find" || challengeDone()) return;
+  if (ui.screen === "pin") {
+    onPinTouchStart(e);
+    return;
+  }
+  if (!findLive()) return;
   var prior = e.touches.length - e.changedTouches.length;
   var i;
   var t;
@@ -1727,6 +1796,10 @@ function onFindTouchStart(e) {
 }
 
 function onFindTouchEnd(e) {
+  if (ui.screen === "pin") {
+    onPinTouchEnd(e);
+    return;
+  }
   var i;
   var t;
   var f;
@@ -1739,7 +1812,7 @@ function onFindTouchEnd(e) {
     f = fingers[t.identifier];
     delete fingers[t.identifier];
     if (!f || f.palm || f.used) continue;
-    if (ui.mode !== "find" || challengeDone()) continue;
+    if (!findLive()) continue;
     if (Date.now() - f.at > 800) continue;
     dx = t.clientX - f.x;
     dy = t.clientY - f.y;
@@ -1829,9 +1902,9 @@ function onClick(e) {
   else if (action === "theme") setTheme(btn.getAttribute("data-value"));
   else if (action === "install-update" && window.SunnyUpdate && SunnyUpdate.install) SunnyUpdate.install();
   else if (action === "check-update" && window.SunnyUpdate && SunnyUpdate.refresh) SunnyUpdate.refresh();
-  else if (action === "pin-digit") onPinDigit(btn.getAttribute("data-digit"));
-  else if (action === "pin-del") onPinDel();
-  else if (action === "pin-cancel") closePin();
+  else if (action === "pin-digit") applyPinKey("pin-digit", btn.getAttribute("data-digit"), true);
+  else if (action === "pin-del") applyPinKey("pin-del", "", true);
+  else if (action === "pin-cancel") applyPinKey("pin-cancel", "", true);
   else if (action === "pin-set") openPin("new", "");
   else if (action === "pin-change") openPin("old", "change");
   else if (action === "pin-off") openPin("old", "off");
@@ -1877,6 +1950,9 @@ function holdGrown() {
 }
 
 function openPin(mode, next) {
+  fingers = {};
+  pinTouch = {};
+  skipPinClick = false;
   ui.pinMode = mode;
   ui.pinNext = next || "";
   ui.pinEntry = "";
