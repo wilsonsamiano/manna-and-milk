@@ -1657,6 +1657,15 @@ function onOne(raw) {
   afterCount();
 }
 
+function findResting(e) {
+  if (ui.mode !== "find" || challengeDone()) return false;
+  var node = e.target && e.target.closest ? e.target : null;
+  if (node && node.closest && node.closest(".choice, [data-action='home'], [data-action='grownups']")) return false;
+  if (e.preventDefault) e.preventDefault();
+  if (e.stopPropagation) e.stopPropagation();
+  return true;
+}
+
 function choiceBox(node) {
   if (!node || !node.closest) return null;
   return node.closest(".choice, button.qty-one, .letter-hit, .pic-card, .trace-card, .pick-card");
@@ -1697,7 +1706,7 @@ function rejectPalm(e) {
 }
 
 function onClick(e) {
-  if (rejectPalm(e)) return;
+  if (findResting(e) || rejectPalm(e)) return;
   if (trace.blockClick) {
     trace.blockClick = false;
     return;
@@ -2160,7 +2169,7 @@ function addPoint(e, svg) {
 }
 
 function onDown(e) {
-  if (rejectPalm(e)) return;
+  if (findResting(e) || rejectPalm(e)) return;
   var home = e.target.closest ? e.target.closest("[data-action='home']") : null;
   if (home) {
     if (save.pin && ui.screen !== "grownups") return;

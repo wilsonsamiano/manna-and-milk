@@ -1,8 +1,7 @@
-Manna & Milk 0.3.1, still a published beta.
+Manna & Milk 0.3.2, still a published beta.
 
-- The circle is a real circle now.
-- With a PIN on, swiping up to the tablet home brings Manna & Milk back. Turn the PIN off when a grown-up needs to leave the app.
+- In every Find lesson, only the three choice boxes respond. A palm on the rest of the screen does nothing.
 
-It installs over 0.3.0. You do not uninstall first.
+It installs over 0.3.1. You do not uninstall first.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)

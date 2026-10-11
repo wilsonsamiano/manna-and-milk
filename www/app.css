@@ -307,6 +307,25 @@ button:focus-visible {
   font-weight: 800;
 }
 
+.screen.boxes[data-mode="find"] {
+  touch-action: none;
+}
+
+.screen.boxes[data-mode="find"] .stage {
+  overflow: hidden;
+  touch-action: none;
+}
+
+.screen.boxes[data-mode="find"] .stage,
+.screen.boxes[data-mode="find"] .stage * {
+  pointer-events: none;
+}
+
+.screen.boxes[data-mode="find"] .choice,
+.screen.boxes[data-mode="find"] .choice * {
+  pointer-events: auto;
+  touch-action: manipulation;
+}
 .screen.boxes .nav,
 .screen.boxes .again,
 .screen.boxes .prompt,
