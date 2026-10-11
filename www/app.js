@@ -153,6 +153,7 @@ var ui = {
   pinDraft: "",
   pinNote: "",
   pinBack: "",
+  talking: false,
 };
 var trace = {
   drawing: false,
@@ -434,7 +435,7 @@ function nav(modes) {
   var nextLabel = ui.screen === "numbers" ? "Next number" : "Next letter";
   var prevLabel = ui.screen === "numbers" ? "Previous number" : "Previous letter";
   var prevLocked = challengeLocked("prev");
-  var nextLocked = challengeLocked("next");
+  var nextOff = nextLocked();
   return (
     '<nav class="nav"><button class="nav-btn" data-action="prev" aria-label="' +
     prevLabel +
@@ -447,7 +448,7 @@ function nav(modes) {
     '</div><button class="nav-btn next" data-action="next" aria-label="' +
     nextLabel +
     '"' +
-    (nextLocked ? " disabled" : "") +
+    (nextOff ? " disabled" : "") +
     ">" +
     chevron("right") +
     "</button></nav>"
@@ -472,6 +473,32 @@ function challengeLocked(which) {
   if (!challengeOn()) return false;
   if (which === "prev") return true;
   return !challengeDone();
+}
+
+function nextLocked() {
+  if (ui.talking) return true;
+  return challengeLocked("next");
+}
+
+function refreshNext() {
+  var btn = document.querySelector(".nav-btn.next");
+  if (!btn) return;
+  btn.disabled = nextLocked();
+}
+
+var talkToken = 0;
+
+function beginTalk() {
+  talkToken += 1;
+  ui.talking = true;
+  refreshNext();
+  return talkToken;
+}
+
+function endTalk(token) {
+  if (token !== talkToken) return;
+  ui.talking = false;
+  refreshNext();
 }
 
 function againBtn() {
@@ -980,7 +1007,9 @@ function happyChimeUrl() {
 }
 
 function celebrate() {
+  var token = beginTalk();
   if (!save.voice) {
+    endTalk(token);
     scheduleAdvance();
     return;
   }
@@ -988,7 +1017,7 @@ function celebrate() {
   var audio = chimeAudio;
   var said = false;
   function sayJob() {
-    if (said) return;
+    if (said || token !== talkToken) return;
     said = true;
     speak("Good job.", scheduleAdvance);
   }
@@ -1040,6 +1069,15 @@ function speak(text, onDone) {
     if (onDone) onDone();
     return;
   }
+  var token = beginTalk();
+  var done = false;
+  function finish() {
+    if (done || token !== talkToken) return;
+    done = true;
+    if (onDone) onDone();
+    endTalk(token);
+  }
+  window.setTimeout(finish, 12000);
   if (window.CLIPS && CLIPS[text]) {
     if (spoken) {
       try {
@@ -1052,13 +1090,14 @@ function speak(text, onDone) {
     spoken = new Audio(src);
     spoken.volume = 1;
     spoken.preload = "auto";
-    if (onDone) spoken.addEventListener("ended", onDone);
+    spoken.addEventListener("ended", finish);
+    spoken.addEventListener("error", finish);
     var play = spoken.play();
-    if (play && play.catch) play.catch(function () {});
+    if (play && play.catch) play.catch(function () { finish(); });
     return;
   }
   if (!window.speechSynthesis) {
-    if (onDone) onDone();
+    finish();
     return;
   }
   try {
@@ -1069,7 +1108,8 @@ function speak(text, onDone) {
     u.pitch = 1.04;
     u.lang = "en-US";
     u.volume = 1;
-    if (onDone) u.onend = onDone;
+    u.onend = finish;
+    u.onerror = finish;
     var v = pickVoice(voices.length ? voices : syn.getVoices() || []);
     if (v && v.localService !== false) u.voice = v;
     try {
@@ -1081,7 +1121,7 @@ function speak(text, onDone) {
       syn.resume();
     } catch (err) {}
   } catch (err) {
-    if (onDone) onDone();
+    finish();
   }
 }
 
@@ -1305,7 +1345,7 @@ function onClick(e) {
   else if (action === "numbers") goNumbers();
   else if (action === "done") onDone();
   else if (action === "next") {
-    if (!challengeLocked("next")) step(1);
+    if (!nextLocked()) step(1);
   } else if (action === "prev") {
     if (!challengeLocked("prev")) step(-1);
   } else if (action === "mode") setMode(btn.getAttribute("data-mode"));
@@ -1813,7 +1853,7 @@ function onKey(e) {
   }
   if (e.key === "ArrowRight") {
     e.preventDefault();
-    if (!challengeLocked("next")) step(1);
+    if (!nextLocked()) step(1);
   } else if (e.key === "ArrowLeft") {
     e.preventDefault();
     if (!challengeLocked("prev")) step(-1);

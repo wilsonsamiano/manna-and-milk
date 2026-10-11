@@ -1,9 +1,9 @@
-Sunny ABC 0.1.19, still a published beta.
+Sunny ABC 0.1.20, still a published beta.
 
 What changed:
-- After the happy sound, the voice says Good job.
-- Then it waits a moment and moves on. Next is already on, so she can tap it sooner.
+- Next stays off while the voice is still talking.
+- That covers letters, numbers, Find, Trace, and Count, including Good job.
 
-It installs over 0.1.18. You do not uninstall first. Hold the sun and tap Check for updates.
+It installs over 0.1.19. You do not uninstall first. Hold the sun and tap Check for updates.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)
