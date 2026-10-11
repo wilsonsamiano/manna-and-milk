@@ -1,9 +1,10 @@
-Manna & Milk 0.1.25, still a published beta.
+Manna & Milk 0.2.0, still a published beta.
 
-- A palm on the rest of the screen does nothing.
-- Only the choice boxes, the letter, the picture, and the tracing card respond to a palm.
-- Find, Trace, and Count also turn off the arrows until she finishes.
+This is the rebrand.
 
-It installs over 0.1.24. You do not uninstall first.
+- The name is Manna & Milk. Sunny ABC was already taken.
+- The picture is a bowl of manna and a cup of milk.
+- GitHub is now manna-and-milk. Old sunny-abc links still open it.
+- It installs over the older beta. You do not uninstall first.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)
