@@ -147,6 +147,12 @@ var ui = {
   countValue: 0,
   countDone: false,
   traceCase: "big",
+  pinMode: "",
+  pinNext: "",
+  pinEntry: "",
+  pinDraft: "",
+  pinNote: "",
+  pinBack: "",
 };
 var trace = {
   drawing: false,
@@ -166,6 +172,7 @@ var liveUtterance = null;
 var audioCtx = null;
 var holdTimer = 0;
 var holdEl = null;
+var holdKind = "";
 
 function rangeById(list, id) {
   var i;
@@ -183,6 +190,7 @@ function defaults() {
     letterIndex: 0,
     numberIndex: 1,
     letterForm: "both",
+    pin: "",
   };
 }
 
@@ -201,6 +209,7 @@ function loadSave() {
         if (typeof p.letterIndex === "number") d.letterIndex = p.letterIndex | 0;
         if (typeof p.numberIndex === "number") d.numberIndex = p.numberIndex | 0;
         if (p.letterForm === "big" || p.letterForm === "small" || p.letterForm === "both") d.letterForm = p.letterForm;
+        if (/^\d{4}$/.test(p.pin || "")) d.pin = p.pin;
       }
     }
   } catch (err) {}
@@ -371,7 +380,9 @@ function modeIcon(kind) {
 
 function header(withHome) {
   var home = withHome
-    ? '<button class="icon-btn" data-action="home" aria-label="Home">' + houseIcon() + "</button>"
+    ? '<button class="icon-btn home-btn" data-action="home" aria-label="Home. Hold to go home.">' +
+      houseIcon() +
+      "</button>"
     : "";
   return (
     '<header class="top' +
@@ -405,19 +416,45 @@ function nav(modes) {
   }
   var nextLabel = ui.screen === "numbers" ? "Next number" : "Next letter";
   var prevLabel = ui.screen === "numbers" ? "Previous number" : "Previous letter";
+  var prevLocked = challengeLocked("prev");
+  var nextLocked = challengeLocked("next");
   return (
     '<nav class="nav"><button class="nav-btn" data-action="prev" aria-label="' +
     prevLabel +
-    '">' +
+    '"' +
+    (prevLocked ? " disabled" : "") +
+    ">" +
     chevron("left") +
     '</button><div class="modes">' +
     html +
     '</div><button class="nav-btn next" data-action="next" aria-label="' +
     nextLabel +
-    '">' +
+    '"' +
+    (nextLocked ? " disabled" : "") +
+    ">" +
     chevron("right") +
     "</button></nav>"
   );
+}
+
+function challengeOn() {
+  return (
+    (ui.screen === "letters" && (ui.mode === "find" || ui.mode === "trace")) ||
+    (ui.screen === "numbers" && (ui.mode === "find" || ui.mode === "count"))
+  );
+}
+
+function challengeDone() {
+  if (ui.mode === "find") return ui.findSolved;
+  if (ui.mode === "count") return ui.countDone;
+  if (ui.mode === "trace") return !!trace.finished;
+  return false;
+}
+
+function challengeLocked(which) {
+  if (!challengeOn()) return false;
+  if (which === "prev") return true;
+  return !challengeDone();
 }
 
 function againBtn() {
@@ -727,6 +764,13 @@ function renderGrown() {
     "</div>" +
     '<p class="g-note">Auto follows this tablet. Light and Dark stay put.</p>' +
     "</section>" +
+    '<section class="g-sec"><h2 class="g-label">Parent lock</h2>' +
+    (save.pin
+      ? '<p class="g-note">Holding the house or the sun asks for the PIN. In a challenge, next and back wait until she finishes. Then next turns on.</p>' +
+        '<div class="chips"><button class="chip" data-action="pin-change">Change PIN</button><button class="chip" data-action="pin-off">Turn off</button></div>'
+      : '<p class="g-note">Set a 4-digit PIN so only a grown-up can hold the house to leave, or open this page. Until then, holding the house goes straight home.</p>' +
+        '<div class="chips"><button class="chip on" data-action="pin-set">Set a PIN</button></div>') +
+    "</section>" +
     updateSection() +
     "</div>" +
     '<div class="grown-foot">' +
@@ -801,6 +845,7 @@ function setTitle() {
   if (ui.screen === "letters") t = "Sunny ABC · " + currentLetter().ch;
   else if (ui.screen === "numbers") t = "Sunny ABC · " + currentNumber();
   else if (ui.screen === "grownups") t = "Sunny ABC · Grown-ups";
+  else if (ui.screen === "pin") t = "Sunny ABC · PIN";
   document.title = t;
 }
 
@@ -810,6 +855,7 @@ function render() {
   var html = "";
   if (ui.screen === "home") html = renderHome();
   else if (ui.screen === "grownups") html = renderGrown();
+  else if (ui.screen === "pin") html = renderPin();
   else html = renderPlay();
   app.innerHTML = html;
   setTitle();
@@ -1215,14 +1261,15 @@ function onClick(e) {
   var btn = e.target.closest ? e.target.closest("[data-action]") : null;
   if (!btn) return;
   var action = btn.getAttribute("data-action");
-  if (action === "grownups") return;
-  if (action === "home") goHome();
-  else if (action === "letters") goLetters();
+  if (action === "grownups" || action === "home") return;
+  if (action === "letters") goLetters();
   else if (action === "numbers") goNumbers();
   else if (action === "done") onDone();
-  else if (action === "next") step(1);
-  else if (action === "prev") step(-1);
-  else if (action === "mode") setMode(btn.getAttribute("data-mode"));
+  else if (action === "next") {
+    if (!challengeLocked("next")) step(1);
+  } else if (action === "prev") {
+    if (!challengeLocked("prev")) step(-1);
+  } else if (action === "mode") setMode(btn.getAttribute("data-mode"));
   else if (action === "hear") speakCurrent();
   else if (action === "again") onAgain();
   else if (action === "pick") onPick(btn.getAttribute("data-id"));
@@ -1236,6 +1283,12 @@ function onClick(e) {
   else if (action === "theme") setTheme(btn.getAttribute("data-value"));
   else if (action === "install-update" && window.SunnyUpdate && SunnyUpdate.install) SunnyUpdate.install();
   else if (action === "check-update" && window.SunnyUpdate && SunnyUpdate.refresh) SunnyUpdate.refresh();
+  else if (action === "pin-digit") onPinDigit(btn.getAttribute("data-digit"));
+  else if (action === "pin-del") onPinDel();
+  else if (action === "pin-cancel") closePin();
+  else if (action === "pin-set") openPin("new", "");
+  else if (action === "pin-change") openPin("old", "change");
+  else if (action === "pin-off") openPin("old", "off");
 }
 
 function clearHold() {
@@ -1245,16 +1298,153 @@ function clearHold() {
   holdEl = null;
 }
 
-function startHold(el, e) {
+function startHold(el, e, kind) {
   clearHold();
   holdEl = el;
+  holdKind = kind || "grownups";
   el.classList.add("holding");
   if (e && e.preventDefault) e.preventDefault();
   holdTimer = window.setTimeout(function () {
+    var which = holdKind;
     holdTimer = 0;
     holdEl = null;
-    openGrownups();
+    holdKind = "";
+    if (which === "home") holdHome();
+    else holdGrown();
   }, 700);
+}
+
+function holdHome() {
+  if (save.pin) openPin("enter", "home");
+  else goHome();
+}
+
+function holdGrown() {
+  if (save.pin && ui.screen !== "grownups" && ui.screen !== "pin") openPin("enter", "grownups");
+  else if (ui.screen !== "pin") openGrownups();
+}
+
+function openPin(mode, next) {
+  ui.pinMode = mode;
+  ui.pinNext = next || "";
+  ui.pinEntry = "";
+  ui.pinNote = "";
+  if (mode === "new" || mode === "old") ui.pinDraft = "";
+  ui.pinBack = ui.screen === "pin" ? ui.pinBack : ui.screen;
+  ui.screen = "pin";
+  render();
+}
+
+function closePin() {
+  ui.pinEntry = "";
+  ui.pinNote = "";
+  ui.pinDraft = "";
+  ui.screen = ui.pinBack && ui.pinBack !== "pin" ? ui.pinBack : "home";
+  render();
+}
+
+function pinTitle() {
+  if (ui.pinMode === "new" || ui.pinMode === "change-new") return "Choose 4 numbers";
+  if (ui.pinMode === "confirm" || ui.pinMode === "change-confirm") return "Enter those numbers again";
+  if (ui.pinMode === "old") return "Enter the current PIN";
+  return "Grown-up PIN";
+}
+
+function renderPin() {
+  var keys = ["1", "2", "3", "4", "5", "6", "7", "8", "9"];
+  var i;
+  var html = "";
+  for (i = 0; i < keys.length; i++) {
+    html += '<button class="pin-key" data-action="pin-digit" data-digit="' + keys[i] + '">' + keys[i] + "</button>";
+  }
+  html +=
+    '<button class="pin-key pin-quiet" data-action="pin-cancel">Cancel</button>' +
+    '<button class="pin-key" data-action="pin-digit" data-digit="0">0</button>' +
+    '<button class="pin-key pin-quiet" data-action="pin-del" aria-label="Delete">Delete</button>';
+  var dots = "";
+  for (i = 0; i < 4; i++) dots += '<span class="pin-dot' + (i < ui.pinEntry.length ? " on" : "") + '"></span>';
+  return (
+    '<main class="screen" data-screen="pin"><div class="pin-wrap"><h1 class="g-title">' +
+    pinTitle() +
+    '</h1><div class="pin-dots" aria-hidden="true">' +
+    dots +
+    '</div><p class="pin-note">' +
+    (ui.pinNote || " ") +
+    '</p><div class="pin-pad">' +
+    html +
+    "</div></div></main>"
+  );
+}
+
+function onPinDigit(digit) {
+  if (!digit || ui.pinEntry.length >= 4) return;
+  ui.pinEntry += digit;
+  ui.pinNote = "";
+  if (ui.pinEntry.length < 4) {
+    render();
+    return;
+  }
+  render();
+  window.setTimeout(finishPin, 140);
+}
+
+function onPinDel() {
+  ui.pinEntry = ui.pinEntry.slice(0, -1);
+  ui.pinNote = "";
+  render();
+}
+
+function finishPin() {
+  if (ui.screen !== "pin" || ui.pinEntry.length !== 4) return;
+  var entered = ui.pinEntry;
+  if (ui.pinMode === "enter" || ui.pinMode === "old") {
+    if (entered !== save.pin) {
+      ui.pinEntry = "";
+      ui.pinNote = "Try again";
+      render();
+      return;
+    }
+    if (ui.pinMode === "old" && ui.pinNext === "off") {
+      save.pin = "";
+      persist();
+      closePin();
+      return;
+    }
+    if (ui.pinMode === "old") {
+      ui.pinEntry = "";
+      ui.pinMode = "change-new";
+      ui.pinDraft = "";
+      render();
+      return;
+    }
+    var dest = ui.pinNext;
+    ui.pinEntry = "";
+    ui.screen = ui.pinBack && ui.pinBack !== "pin" ? ui.pinBack : "home";
+    if (dest === "home") goHome();
+    else openGrownups();
+    return;
+  }
+  if (ui.pinMode === "new" || ui.pinMode === "change-new") {
+    ui.pinDraft = entered;
+    ui.pinEntry = "";
+    ui.pinMode = ui.pinMode === "new" ? "confirm" : "change-confirm";
+    render();
+    return;
+  }
+  if (entered !== ui.pinDraft) {
+    ui.pinEntry = "";
+    ui.pinDraft = "";
+    ui.pinMode = ui.pinMode === "confirm" ? "new" : "change-new";
+    ui.pinNote = "Those didn't match. Start again.";
+    render();
+    return;
+  }
+  save.pin = entered;
+  ui.pinDraft = "";
+  persist();
+  ui.pinEntry = "";
+  ui.screen = "grownups";
+  render();
 }
 
 function localPoint(svg, event) {
@@ -1515,9 +1705,14 @@ function addPoint(e, svg) {
 }
 
 function onDown(e) {
+  var home = e.target.closest ? e.target.closest("[data-action='home']") : null;
+  if (home) {
+    startHold(home, e, "home");
+    return;
+  }
   var grown = e.target.closest ? e.target.closest("[data-action='grownups']") : null;
   if (grown) {
-    startHold(grown, e);
+    startHold(grown, e, "grownups");
     return;
   }
   if (ui.screen === "letters" && ui.mode === "trace") {
@@ -1576,10 +1771,10 @@ function onKey(e) {
   }
   if (e.key === "ArrowRight") {
     e.preventDefault();
-    step(1);
+    if (!challengeLocked("next")) step(1);
   } else if (e.key === "ArrowLeft") {
     e.preventDefault();
-    step(-1);
+    if (!challengeLocked("prev")) step(-1);
   }
 }
 

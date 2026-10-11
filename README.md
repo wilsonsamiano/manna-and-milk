@@ -14,7 +14,7 @@ The same link is on the grown-ups screen (hold the sun).
 
 Sideload only. Not on the Play Store.
 
-1. Download **sunny-abc-beta.apk** from [Releases](https://github.com/wilsonsamiano/sunny-abc/releases/tag/v0.1.16-beta).
+1. Download **sunny-abc-beta.apk** from [Releases](https://github.com/wilsonsamiano/sunny-abc/releases/tag/v0.1.17-beta).
 2. On the tablet, open the file and allow install from that source.
 3. Open Sunny ABC. It runs offline after install. Letters, tracing, counting, and numbers through 100 are in the app.
 
@@ -22,7 +22,7 @@ Works on Android and Fire tablets. The voice is the tablet’s own text-to-speec
 
 ## One-file page
 
-**Sunny-ABC.html** on [Releases](https://github.com/wilsonsamiano/sunny-abc/releases/tag/v0.1.16-beta) is the whole game in a single HTML file. Pictures and spoken words are inside the file. No extra folders.
+**Sunny-ABC.html** on [Releases](https://github.com/wilsonsamiano/sunny-abc/releases/tag/v0.1.17-beta) is the whole game in a single HTML file. Pictures and spoken words are inside the file. No extra folders.
 
 1. Download **Sunny-ABC.html**.
 2. Open it in Silk or Chrome on the tablet.
@@ -48,7 +48,7 @@ export SUNNY_KEY_PASSWORD=...
 gradle assembleRelease
 ```
 
-The signed beta APK is attached to the [v0.1.16-beta release](https://github.com/wilsonsamiano/sunny-abc/releases/tag/v0.1.16-beta). GitHub Actions also builds a debug APK on `main` as an artifact. The release file is the one to install. It is signed with the same key as 0.1.15, so it installs over that beta. The app also checks GitHub for a newer copy and can install it over itself. You do not uninstall first. Android still asks you to tap Update.
+The signed beta APK is attached to the [v0.1.17-beta release](https://github.com/wilsonsamiano/sunny-abc/releases/tag/v0.1.17-beta). GitHub Actions also builds a debug APK on `main` as an artifact. The release file is the one to install. It is signed with the same key as 0.1.16, so it installs over that beta. The app also checks GitHub for a newer copy and can install it over itself. You do not uninstall first. Android still asks you to tap Update.
 
 ## Layout
 
