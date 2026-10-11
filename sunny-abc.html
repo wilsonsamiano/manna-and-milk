@@ -1271,7 +1271,9 @@ function renderHome() {
     lr.label +
     " · " +
     nr.label +
-    "<br>Hold the sun for grown-ups</p></main>"
+    "<br>Hold the sun for grown-ups</p>" +
+    updateHomeNote() +
+    "</main>"
   );
 }
 
@@ -1514,7 +1516,9 @@ function renderGrown() {
     themeChip("dark", "Dark") +
     "</div>" +
     '<p class="g-note">Auto follows this tablet. Light and Dark stay put.</p>' +
-    "</section></div>" +
+    "</section>" +
+    updateSection() +
+    "</div>" +
     '<div class="grown-foot">' +
     (window.SUNNY_SINGLE
       ? ""
@@ -1985,6 +1989,7 @@ function onClick(e) {
   else if (action === "number-range") setNumberRange(btn.getAttribute("data-id"));
   else if (action === "voice") setVoice(btn.getAttribute("data-value") === "on");
   else if (action === "theme") setTheme(btn.getAttribute("data-value"));
+  else if (action === "install-update" && window.SunnyUpdate && SunnyUpdate.install) SunnyUpdate.install();
 }
 
 function clearHold() {
@@ -2296,6 +2301,45 @@ function onKey(e) {
     step(-1);
   }
 }
+
+function readUpdate() {
+  if (!window.SunnyUpdate || !SunnyUpdate.status) return { state: "off", version: "", current: "" };
+  try {
+    return JSON.parse(SunnyUpdate.status() || "{}");
+  } catch (err) {
+    return { state: "error", version: "", current: "" };
+  }
+}
+
+function updateHomeNote() {
+  var info = readUpdate();
+  if (info.state !== "ready") return "";
+  return '<p class="hint">A newer copy is ready. Hold the sun, then Install update.</p>';
+}
+
+function updateSection() {
+  if (!window.SunnyUpdate) {
+    return (
+      '<section class="g-sec"><h2 class="g-label">Updates</h2>' +
+      '<p class="g-note">In the installed app, a newer copy installs over this one. You do not uninstall first.</p></section>'
+    );
+  }
+  var info = readUpdate();
+  var note = "Looking for a newer copy…";
+  if (info.state === "ready") note = "Version " + info.version + " is ready. It installs over this one. You do not uninstall.";
+  else if (info.state === "current") note = "This is the newest copy" + (info.current ? " (" + info.current + ")." : ".");
+  else if (info.state === "downloading") note = "Downloading the newer copy…";
+  else if (info.state === "error") note = "Couldn't check just now. The game still works offline.";
+  var btn =
+    info.state === "ready"
+      ? '<button class="chip on" data-action="install-update">Install update</button>'
+      : "";
+  return '<section class="g-sec"><h2 class="g-label">Updates</h2><p class="g-note">' + note + "</p>" + btn + "</section>";
+}
+
+window.sunnyUpdateChanged = function () {
+  if (ui.screen === "grownups" || ui.screen === "home") render();
+};
 
 function registerWorker() {
   if (window.SUNNY_SINGLE) return;

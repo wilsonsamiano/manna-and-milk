@@ -1,12 +1,12 @@
-Sunny ABC 0.1.2, still a published beta.
+Sunny ABC 0.1.3, still a published beta.
 
 What changed:
-- Pictures are painted so they look more like real things.
-- A right answer plays a higher, brighter chime, then moves on after a few seconds.
-- **Sunny-ABC.html** is the whole game in one file. Pictures and spoken words are inside it.
+- The installed app looks for a newer copy and downloads it.
+- Update installs over this one. You do not uninstall first.
+- Android still asks you to tap Update. Hold the sun, then Install update, if you skipped the prompt.
 
-Download **sunny-abc-beta.apk** and open it on an Android or Fire tablet. Allow install from that source. It is signed with the same key as 0.1.1, so it replaces that beta. Not on the Play Store. The game runs offline.
+Download **sunny-abc-beta.apk** one last time by hand if you are still on 0.1.2. After this copy is installed, the next one can update itself. Same signing key, so it replaces 0.1.2. Not on the Play Store.
 
-Hold the sun for grown-ups (letter and number ranges, voice, light or dark).
+**Sunny-ABC.html** is the whole game in one file.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)

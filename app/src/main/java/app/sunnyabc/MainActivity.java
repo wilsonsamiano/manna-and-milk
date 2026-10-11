@@ -57,11 +57,15 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        UpdateClient updates = new UpdateClient(this, webView);
+        updates.attach();
+
         if (savedInstanceState != null) {
             webView.restoreState(savedInstanceState);
         } else {
             webView.loadUrl(GAME);
         }
+        updates.start();
     }
 
     @Override
