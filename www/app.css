@@ -243,6 +243,18 @@ button:focus-visible {
   font-weight: 800;
 }
 
+.screen.boxes .nav,
+.screen.boxes .again,
+.screen.boxes .prompt,
+.screen.boxes .feedback,
+.screen.boxes .tally,
+.screen.boxes .hint,
+.screen.boxes .mark,
+.screen.boxes .brand,
+.screen.boxes .lede {
+  pointer-events: none;
+}
+
 .hint {
   text-align: center;
   font-size: 18px;

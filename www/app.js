@@ -548,7 +548,7 @@ function renderHome() {
   var lr = currentLetterRange();
   var nr = currentNumberRange();
   return (
-    '<main class="screen" data-screen="home">' +
+    '<main class="screen boxes" data-screen="home">' +
     header(false) +
     '<div class="home-main"><img class="mark" alt="" src="mark.jpg"><h1 class="brand">Manna & Milk</h1><p class="lede">Little lessons</p><div class="pick">' +
     '<button class="pick-card" data-action="letters"><span class="pair pair-card"><span class="upper">A</span><span class="lower">a</span></span><span class="pick-label">Letters</span></button>' +
@@ -858,8 +858,11 @@ function renderPlay() {
     else if (ui.mode === "find") stage = renderNumberFind(n);
     else stage = renderNumberLook(n);
   }
+  var guard = challengeOn() && !challengeDone() ? " boxes" : "";
   return (
-    '<main class="screen" data-screen="' +
+    '<main class="screen' +
+    guard +
+    '" data-screen="' +
     ui.screen +
     '" data-mode="' +
     ui.mode +
@@ -1343,7 +1346,47 @@ function onOne(raw) {
   afterCount();
 }
 
+function choiceBox(node) {
+  if (!node || !node.closest) return null;
+  return node.closest(".choice, button.qty-one, .letter-hit, .pic-card, .trace-card, .pick-card");
+}
+
+function isPalm(e) {
+  var w = e.width || 0;
+  var h = e.height || 0;
+  if (w < 1 && h < 1 && e.touches && e.touches[0]) {
+    w = (e.touches[0].radiusX || 0) * 2;
+    h = (e.touches[0].radiusY || 0) * 2;
+  }
+  if (w < 1 && h < 1) return false;
+  return Math.max(w, h) >= 46;
+}
+
+var palmIds = {};
+
+function kidScreen() {
+  return ui.screen === "home" || ui.screen === "letters" || ui.screen === "numbers";
+}
+
+function palmBlocked(e) {
+  if (!kidScreen() || choiceBox(e.target)) return false;
+  if (isPalm(e) || palmIds[e.pointerId]) return true;
+  return false;
+}
+
+function rejectPalm(e) {
+  if (e.pointerId != null) {
+    if (isPalm(e)) palmIds[e.pointerId] = 1;
+    else delete palmIds[e.pointerId];
+  }
+  if (!palmBlocked(e)) return false;
+  if (e.preventDefault) e.preventDefault();
+  if (e.stopPropagation) e.stopPropagation();
+  return true;
+}
+
 function onClick(e) {
+  if (rejectPalm(e)) return;
   if (trace.blockClick) {
     trace.blockClick = false;
     return;
@@ -1802,6 +1845,7 @@ function addPoint(e, svg) {
 }
 
 function onDown(e) {
+  if (rejectPalm(e)) return;
   var home = e.target.closest ? e.target.closest("[data-action='home']") : null;
   if (home) {
     if (save.pin && ui.screen !== "grownups") return;
@@ -1858,6 +1902,7 @@ function endDraw(e) {
 }
 
 function onUp(e) {
+  if (e && e.pointerId != null) delete palmIds[e.pointerId];
   clearHold();
   endDraw(e);
 }
@@ -1896,7 +1941,7 @@ var INTRO = [
   },
   {
     title: "How she plays",
-    body: "Look is for seeing and hearing. Find, Trace, and Count wait until she finishes. Next stays off while the voice is still talking.",
+    body: "Look is for seeing and hearing. Find, Trace, and Count wait until she finishes. Only the picture boxes respond, so a palm on the rest of the screen does nothing. Next stays off while the voice is still talking.",
   },
   {
     title: "Sun and house",
