@@ -104,6 +104,35 @@ var LETTERS = [
   L("Z", "z", "zebra", "zzz", "Z says zzz. Zebra.", ["M40 32 H160", "M160 32 L40 188", "M40 188 H160"]),
 ];
 
+var SMALL_STROKES = [
+  ["M132 148 C132 112 58 112 58 148 C58 184 132 184 132 148", "M132 112 V188"],
+  ["M62 28 V188", "M62 118 C62 100 150 100 150 146 C150 192 62 192 62 148"],
+  ["M150 124 C112 98 46 110 46 150 C46 192 112 206 150 176"],
+  ["M68 148 C68 112 148 112 148 148 C148 184 68 184 68 148", "M148 28 V188"],
+  ["M52 150 H142", "M142 150 C142 108 46 108 46 150 C46 194 118 206 150 176"],
+  ["M146 52 C118 28 78 36 78 70 V188", "M48 108 H122"],
+  ["M68 136 C68 102 148 102 148 136 C148 170 68 170 68 136", "M148 108 V176 C148 210 68 214 66 180"],
+  ["M62 28 V188", "M62 128 C62 104 148 104 148 140 V188"],
+  ["M100 40 C110 40 110 56 100 56 C90 56 90 40 100 40", "M100 78 V188"],
+  ["M118 40 C128 40 128 56 118 56 C108 56 108 40 118 40", "M118 78 V170 C118 204 58 208 54 176"],
+  ["M62 28 V188", "M142 108 L62 150", "M92 136 L148 188"],
+  ["M96 28 V168 C96 198 156 198 162 172"],
+  ["M40 188 V112", "M40 132 C40 108 92 108 92 142 V188", "M92 132 C92 108 144 108 144 142 V188"],
+  ["M56 188 V112", "M56 132 C56 108 148 108 148 142 V188"],
+  ["M100 112 C152 112 166 132 166 154 C166 188 138 206 100 206 C62 206 34 188 34 154 C34 132 48 112 100 112"],
+  ["M62 112 V208", "M62 136 C62 108 156 108 156 148 C156 188 62 188 62 150"],
+  ["M148 136 C148 108 54 108 54 148 C54 188 148 188 148 150", "M148 112 V208"],
+  ["M64 188 V112", "M64 128 C64 106 146 106 152 128"],
+  ["M144 126 C132 102 56 106 54 134 C52 158 148 146 146 176 C144 204 54 208 46 178"],
+  ["M100 48 V168 C100 198 158 198 164 172", "M58 100 H142"],
+  ["M48 112 V152 C48 190 152 190 152 152 V112"],
+  ["M40 112 L100 188", "M160 112 L100 188"],
+  ["M32 112 L64 188", "M64 188 L100 128", "M100 128 L136 188", "M136 188 L168 112"],
+  ["M44 112 L156 188", "M156 112 L44 188"],
+  ["M44 112 L100 168", "M156 112 L100 168", "M100 168 V204 C100 220 68 222 60 200"],
+  ["M44 112 H156", "M156 112 L44 188", "M44 188 H156"],
+];
+
 var save = loadSave();
 var ui = {
   screen: "home",
@@ -117,6 +146,7 @@ var ui = {
   countTapped: {},
   countValue: 0,
   countDone: false,
+  traceCase: "big",
 };
 var trace = {
   drawing: false,
@@ -152,6 +182,7 @@ function defaults() {
     numberRange: "1-10",
     letterIndex: 0,
     numberIndex: 1,
+    letterForm: "both",
   };
 }
 
@@ -169,6 +200,7 @@ function loadSave() {
         if (rangeById(NUMBER_RANGES, p.numberRange)) d.numberRange = p.numberRange;
         if (typeof p.letterIndex === "number") d.letterIndex = p.letterIndex | 0;
         if (typeof p.numberIndex === "number") d.numberIndex = p.numberIndex | 0;
+        if (p.letterForm === "big" || p.letterForm === "small" || p.letterForm === "both") d.letterForm = p.letterForm;
       }
     }
   } catch (err) {}
@@ -200,6 +232,38 @@ function currentLetter() {
   var r = currentLetterRange();
   if (save.letterIndex < r.from || save.letterIndex > r.to) save.letterIndex = r.from;
   return LETTERS[save.letterIndex];
+}
+
+function letterForm() {
+  return save.letterForm === "big" || save.letterForm === "small" ? save.letterForm : "both";
+}
+
+function smallStrokes(item) {
+  var i = LETTERS.indexOf(item);
+  return i >= 0 && SMALL_STROKES[i] ? SMALL_STROKES[i] : item.strokes;
+}
+
+function tracingSmall() {
+  var form = letterForm();
+  if (form === "small") return true;
+  if (form === "big") return false;
+  return ui.traceCase === "small";
+}
+
+function promptLetters(item) {
+  var form = letterForm();
+  var html = "";
+  if (form !== "small") html += '<span class="prompt-ch">' + item.ch + "</span> ";
+  if (form !== "big") html += '<span class="prompt-ch lower">' + item.lower + "</span> ";
+  return html;
+}
+
+function letterPair(item, card) {
+  var form = letterForm();
+  var html = '<span class="pair' + (card ? " pair-card" : "") + (form === "both" ? " both" : "") + '">';
+  if (form !== "small") html += '<span class="upper">' + item.ch + "</span>";
+  if (form !== "big") html += '<span class="lower">' + item.lower + "</span>";
+  return html + "</span>";
 }
 
 function currentNumber() {
@@ -419,11 +483,8 @@ function renderLetterLook(item) {
     '<div class="stage"><div class="look">' +
     '<button class="letter-hit" data-action="hear" aria-label="Hear ' +
     item.ch +
-    '"><span class="pair"><span class="upper">' +
-    item.ch +
-    '</span><span class="lower">' +
-    item.lower +
-    "</span></span>" +
+    '">' +
+    letterPair(item) +
     wordHtml(item.word) +
     '<span class="sound">' +
     speakerIcon() +
@@ -463,9 +524,9 @@ function renderLetterFind(item) {
   }
   var feedback = ui.findSolved ? "Yes! " + item.word : ui.saidWrong ? "Let's look again" : "";
   return (
-    '<div class="stage"><div class="find"><p class="prompt"><span class="prompt-ch">' +
-    item.ch +
-    "</span> Find the " +
+    '<div class="stage"><div class="find"><p class="prompt">' +
+    promptLetters(item) +
+    "Find the " +
     item.word +
     '</p><div class="choices">' +
     html +
@@ -480,16 +541,17 @@ function renderLetterFind(item) {
 function renderTrace(item) {
   var paths = "";
   var i;
-  for (i = 0; i < item.strokes.length; i++) {
-    paths += '<path class="guide" d="' + item.strokes[i] + '"></path>';
+  var small = tracingSmall();
+  var strokes = small ? smallStrokes(item) : item.strokes;
+  var glyph = small ? item.lower : item.ch;
+  for (i = 0; i < strokes.length; i++) {
+    paths += '<path class="guide" d="' + strokes[i] + '"></path>';
   }
   return (
     '<div class="stage"><div class="trace-wrap"><p class="prompt">Trace <span class="prompt-ch">' +
-    item.ch +
-    '</span> <span class="lower">' +
-    item.lower +
+    glyph +
     '</span></p><div class="trace-card"><svg class="trace-board" viewBox="0 0 200 220" role="img" aria-label="Trace the letter ' +
-    item.ch +
+    glyph +
     '"><rect class="hit" x="0" y="0" width="200" height="220" fill="#fff" fill-opacity="0"></rect><g class="guides">' +
     paths +
     '</g><g class="arrows"></g><g class="ink"></g><g class="steps"></g></svg></div><p class="feedback" role="status">Follow the arrows</p>' +
@@ -630,6 +692,17 @@ function renderGrown() {
     "<p class=\"g-note\">All letters are on to start. Pick a smaller set any time. Nothing is timed, and there is no score.</p>" +
     '<section class="g-sec"><h2 class="g-label">Letters</h2><div class="chips">' +
     chips(LETTER_RANGES, save.letterRange, "letter-range") +
+    '</div></section>' +
+    '<section class="g-sec"><h2 class="g-label">Big and small</h2><div class="chips">' +
+    chips(
+      [
+        { id: "both", label: "Both" },
+        { id: "big", label: "Big only" },
+        { id: "small", label: "Small only" },
+      ],
+      letterForm(),
+      "letter-form"
+    ) +
     "</div></section>" +
     '<section class="g-sec"><h2 class="g-label">Numbers</h2><div class="chips">' +
     chips(NUMBER_RANGES, save.numberRange, "number-range") +
@@ -702,7 +775,7 @@ function renderPlay() {
 }
 
 function activityKey() {
-  if (ui.screen === "letters") return "L:" + ui.mode + ":" + save.letterIndex + ":" + save.letterRange;
+  if (ui.screen === "letters") return "L:" + ui.mode + ":" + save.letterIndex + ":" + save.letterRange + ":" + letterForm();
   if (ui.screen === "numbers") return "N:" + ui.mode + ":" + save.numberIndex + ":" + save.numberRange;
   return "";
 }
@@ -717,6 +790,7 @@ function ensureActivity() {
   ui.countTapped = {};
   ui.countValue = 0;
   ui.countDone = false;
+  ui.traceCase = letterForm() === "small" ? "small" : "big";
   ui.choices = [];
   if (ui.screen === "letters" && ui.mode === "find") ui.choices = makeLetterChoices(save.letterIndex);
   if (ui.screen === "numbers" && ui.mode === "find") ui.choices = makeNumberChoices(save.numberIndex);
@@ -1028,6 +1102,15 @@ function setLetterRange(id) {
   render();
 }
 
+function setLetterForm(id) {
+  if (id !== "both" && id !== "big" && id !== "small") return;
+  save.letterForm = id;
+  ui.choiceKey = "";
+  ui.traceCase = id === "small" ? "small" : "big";
+  persist();
+  render();
+}
+
 function setNumberRange(id) {
   var r = rangeById(NUMBER_RANGES, id);
   if (!r) return;
@@ -1147,6 +1230,7 @@ function onClick(e) {
   else if (action === "ten") onTen(btn.getAttribute("data-i"));
   else if (action === "one") onOne(btn.getAttribute("data-i"));
   else if (action === "letter-range") setLetterRange(btn.getAttribute("data-id"));
+  else if (action === "letter-form") setLetterForm(btn.getAttribute("data-id"));
   else if (action === "number-range") setNumberRange(btn.getAttribute("data-id"));
   else if (action === "voice") setVoice(btn.getAttribute("data-value") === "on");
   else if (action === "theme") setTheme(btn.getAttribute("data-value"));
@@ -1383,6 +1467,11 @@ function traceProgress() {
   }
   paintTraceGuides();
   if (!all || !trace.guideLength || drawnLength() < trace.guideLength * 0.5) return;
+  if (letterForm() === "both" && ui.traceCase !== "small") {
+    ui.traceCase = "small";
+    render();
+    return;
+  }
   trace.finished = true;
   var note = document.querySelector(".feedback");
   if (note) note.textContent = "Yes! Nice tracing.";
