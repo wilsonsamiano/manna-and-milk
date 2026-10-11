@@ -979,6 +979,27 @@ function happyChimeUrl() {
   return chimeUrl;
 }
 
+function celebrate() {
+  if (!save.voice) {
+    scheduleAdvance();
+    return;
+  }
+  chime();
+  var audio = chimeAudio;
+  var said = false;
+  function sayJob() {
+    if (said) return;
+    said = true;
+    speak("Good job.", scheduleAdvance);
+  }
+  if (audio) {
+    audio.addEventListener("ended", sayJob, { once: true });
+    window.setTimeout(sayJob, 1400);
+  } else {
+    window.setTimeout(sayJob, 900);
+  }
+}
+
 function chime() {
   if (!save.voice) return;
   try {
@@ -1027,7 +1048,7 @@ function speak(text, onDone) {
       } catch (err) {}
     }
     var src = CLIPS[text];
-    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=11";
+    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=12";
     spoken = new Audio(src);
     spoken.volume = 1;
     spoken.preload = "auto";
@@ -1217,8 +1238,7 @@ function onPick(raw) {
     ui.findSolved = true;
     ui.nudge = "";
     render();
-    chime();
-    scheduleAdvance();
+    celebrate();
   } else {
     ui.nudge = String(id);
     var first = !ui.saidWrong;
@@ -1244,8 +1264,7 @@ function afterCount() {
     return;
   }
   speak(numberWord(ui.countValue) + ".", function () {
-    chime();
-    scheduleAdvance();
+    celebrate();
   });
 }
 
@@ -1687,9 +1706,8 @@ function traceProgress() {
   }
   trace.finished = true;
   var note = document.querySelector(".feedback");
-  if (note) note.textContent = "Yes! Nice tracing.";
-  chime();
-  speak("Nice tracing.", scheduleAdvance);
+  if (note) note.textContent = "Good job.";
+  celebrate();
 }
 
 function startDraw(e, svg) {
