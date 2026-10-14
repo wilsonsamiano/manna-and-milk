@@ -152,7 +152,7 @@ var LETTERS = [
   L("T", "t", "tree", "tuh", "T says tuh. Tree.", ["M100 32 V188", "M36 32 H164"]),
   L("U", "u", "umbrella", "uh", "U says uh. Umbrella.", ["M46 32 V128 C46 186 154 186 154 128 V32"]),
   L("V", "v", "van", "vvv", "V says vvv. Van.", ["M36 32 L100 188", "M164 32 L100 188"]),
-  L("W", "w", "whale", "wuh", "Double. U says wuh. Whale.", ["M28 32 L62 188", "M62 188 L100 84", "M100 84 L138 188", "M138 188 L172 32"]),
+  L("W", "w", "whale", "wuh", "Double U says wuh. Whale.", ["M28 32 L62 188", "M62 188 L100 84", "M100 84 L138 188", "M138 188 L172 32"]),
   L("X", "x", "xylophone", "ks", "X says ks. Xylophone.", ["M40 32 L160 188", "M160 32 L40 188"]),
   L("Y", "y", "yo-yo", "yuh", "Y says yuh. Yo-yo.", ["M40 32 L100 112", "M160 32 L100 112", "M100 112 V188"]),
   L("Z", "z", "zebra", "zzz", "Z says zzz. Zebra.", ["M40 32 H160", "M160 32 L40 188", "M40 188 H160"]),
@@ -1449,7 +1449,7 @@ function speak(text, onDone) {
       } catch (err) {}
     }
     var src = CLIPS[text];
-    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=15";
+    if (src.indexOf("data:") !== 0) src = "voice/" + src + "?v=16";
     spoken = new Audio(src);
     spoken.volume = 1;
     spoken.preload = "auto";

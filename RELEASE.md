@@ -1,7 +1,7 @@
-Manna & Milk 0.3.8, still a published beta.
+Manna & Milk 0.3.9, still a published beta.
 
-- A new Words lesson: Milk, Dog, God, Momma, and Dadda. She can hear each word and find the picture.
+- W now says "double U" without the long pause between the two words.
 
-It installs over 0.3.7. You do not uninstall first.
+It installs over 0.3.8. You do not uninstall first.
 
 [Buy me a coffee](https://buymeacoffee.com/wilsonsamiano)
