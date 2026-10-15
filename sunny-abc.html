@@ -3336,7 +3336,7 @@ function coverage(samples, points) {
     if (first < 0) first = i;
     last = i;
   }
-  if (samples.length > 5 && (last - first) / (samples.length - 1) < 0.62) return 0;
+  if (samples.length > 5 && (last - first) / (samples.length - 1) < 0.78) return 0;
   return hit / samples.length;
 }
 
@@ -3437,6 +3437,7 @@ function setupTrace() {
   trace.strokes = [];
   trace.samples = [];
   trace.done = [];
+  trace.lengths = [];
   trace.finished = false;
   trace.guides = null;
   trace.ink = null;
@@ -3453,6 +3454,7 @@ function setupTrace() {
   for (i = 0; i < guides.length; i++) {
     trace.samples.push(samplePath(guides[i], 8));
     trace.done.push(false);
+    trace.lengths.push(guides[i].getTotalLength());
     trace.guideLength += guides[i].getTotalLength();
     addArrow(arrows, guides[i]);
     addStep(steps, guides[i], i + 1, placed);
@@ -3493,19 +3495,61 @@ function paintLine() {
   trace.line.setAttribute("points", s);
 }
 
+function strokeTravel(samples) {
+  var total = 0;
+  var i;
+  var j;
+  var k;
+  var r2 = TRACE_RADIUS * TRACE_RADIUS;
+  var step = samples.length > 24 ? 2 : 1;
+  for (i = 0; i < trace.strokes.length; i++) {
+    var pts = trace.strokes[i];
+    for (j = 1; j < pts.length; j++) {
+      var mx = (pts[j].x + pts[j - 1].x) / 2;
+      var my = (pts[j].y + pts[j - 1].y) / 2;
+      var near = false;
+      for (k = 0; k < samples.length; k += step) {
+        var dx = samples[k].x - mx;
+        var dy = samples[k].y - my;
+        if (dx * dx + dy * dy <= r2) {
+          near = true;
+          break;
+        }
+      }
+      if (!near) continue;
+      var sx = pts[j].x - pts[j - 1].x;
+      var sy = pts[j].y - pts[j - 1].y;
+      total += Math.sqrt(sx * sx + sy * sy);
+    }
+  }
+  return total;
+}
+
 function traceProgress() {
   if (!trace.samples.length || trace.finished) return;
   var i;
-  var all = trace.samples.length > 0;
+  var active = -1;
   for (i = 0; i < trace.samples.length; i++) {
-    if (!trace.done[i] && coverage(trace.samples[i], tracePoints()) >= TRACE_NEED) trace.done[i] = true;
-    if (!trace.done[i]) all = false;
+    if (!trace.done[i]) {
+      active = i;
+      break;
+    }
+  }
+  if (active >= 0) {
+    var len = trace.lengths[active] || 1;
+    var covered = coverage(trace.samples[active], tracePoints());
+    var traveled = strokeTravel(trace.samples[active]);
+    var short = len < 36;
+    if (covered >= (short ? 0.85 : TRACE_NEED) && traveled >= (short ? 0 : len * 0.55)) trace.done[active] = true;
   }
   paintTraceGuides();
-  if (!all || !trace.guideLength || drawnLength() < trace.guideLength * 0.5) return;
+  for (i = 0; i < trace.done.length; i++) if (!trace.done[i]) return;
+  if (!trace.guideLength || drawnLength() < trace.guideLength * 0.5) return;
+  if (trace.drawing) return;
   if (ui.screen === "letters" && letterForm() === "both" && ui.traceCase !== "small") {
     ui.traceCase = "small";
     render();
+    speakCurrent();
     return;
   }
   trace.finished = true;
