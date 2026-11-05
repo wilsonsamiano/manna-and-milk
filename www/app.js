@@ -228,7 +228,6 @@ var liveUtterance = null;
 var audioCtx = null;
 var holdTimer = 0;
 var holdEl = null;
-var holdKind = "";
 
 function rangeById(list, id) {
   var i;
@@ -527,7 +526,7 @@ function homeLocked() {
 function header(withHome) {
   var locked = homeLocked();
   var home = withHome && !locked
-    ? '<button class="icon-btn home-btn" data-action="home" aria-label="Home. Hold to go home.">' +
+    ? '<button class="icon-btn home-btn" data-action="home" aria-label="Home.">' +
       houseIcon() +
       "</button>"
     : "";
@@ -542,7 +541,7 @@ function header(withHome) {
   );
 }
 
-function nav(modes) {
+function modesBar(modes) {
   var i;
   var html = "";
   for (i = 0; i < modes.length; i++) {
@@ -561,6 +560,10 @@ function nav(modes) {
       m.label +
       "</span></button>";
   }
+  return '<div class="modes-top"><div class="modes">' + html + "</div></div>";
+}
+
+function nav() {
   var nextLabel = "Next " + lessonNoun();
   var prevLabel = "Previous " + lessonNoun();
   var prevLocked = challengeLocked("prev");
@@ -572,9 +575,7 @@ function nav(modes) {
     (prevLocked ? " disabled" : "") +
     ">" +
     chevron("left") +
-    '</button><div class="modes">' +
-    html +
-    '</div><button class="nav-btn next" data-action="next" aria-label="' +
+    '</button><span class="nav-spacer"></span><button class="nav-btn next" data-action="next" aria-label="' +
     nextLabel +
     '"' +
     (nextOff ? " disabled" : "") +
@@ -642,7 +643,7 @@ function endTalk(token) {
 }
 
 function againBtn() {
-  return '<button class="again" data-action="again">Try again</button>';
+  return '<span class="again">Try again</span>';
 }
 
 function wordHtml(word) {
@@ -975,7 +976,7 @@ function renderGrown() {
         '<div class="chips"><button class="chip" data-action="go-home">Go home</button>' +
         (window.SunnyLock ? '<button class="chip on" data-action="close-app">Close app</button>' : "") +
         '<button class="chip" data-action="pin-change">Change PIN</button><button class="chip" data-action="pin-off">Turn off</button></div>'
-      : '<p class="g-note">Set a 4-digit PIN to lock the tablet Home button. Until then, hold the house to go home.</p>' +
+      : '<p class="g-note">Set a 4-digit PIN to lock the tablet Home button. Until then, tap the house to go home.</p>' +
         '<div class="chips"><button class="chip on" data-action="pin-set">Set a PIN</button></div>') +
     "</section>" +
     updateSection() +
@@ -1202,8 +1203,9 @@ function renderPlay() {
     ui.mode +
     '">' +
     header(true) +
+    modesBar(modes) +
     stage +
-    nav(modes) +
+    nav() +
     "</main>"
   );
 }
@@ -1615,12 +1617,6 @@ function step(dir) {
   speakCurrent();
 }
 
-function onAgain() {
-  clearAdvance();
-  ui.choiceKey = "";
-  render();
-}
-
 function onDone() {
   ui.screen = ui.back && ui.back !== "grownups" ? ui.back : "home";
   ui.choiceKey = "";
@@ -1759,22 +1755,6 @@ function onDot(raw) {
   afterCount();
 }
 
-function onTen(raw) {
-  if (ui.countDone) return;
-  var key = "d" + raw;
-  if (ui.countTapped[key]) return;
-  ui.countTapped[key] = true;
-  afterCount();
-}
-
-function onOne(raw) {
-  if (ui.countDone) return;
-  var key = "d" + raw;
-  if (ui.countTapped[key]) return;
-  ui.countTapped[key] = true;
-  afterCount();
-}
-
 function findLive() {
   if (ui.mode !== "find" || challengeDone()) return false;
   return ui.screen === "letters" || ui.screen === "numbers" || ui.screen === "shapes" || ui.screen === "colors" || ui.screen === "words";
@@ -1804,11 +1784,6 @@ function selectChoice(id) {
   if (now - lastPickAt < 450) return;
   lastPickAt = now;
   onPick(id);
-}
-
-function markFingersPalm() {
-  var k;
-  for (k in fingers) fingers[k].palm = true;
 }
 
 var pinTouch = {};
@@ -1877,38 +1852,31 @@ function onFindTouchStart(e) {
     return;
   }
   if (!findLive()) return;
-  var prior = e.touches.length - e.changedTouches.length;
   var i;
   var t;
   var choice;
   var id;
   var size;
-  var picks = [];
-  if (prior > 0) markFingersPalm();
+  var k;
+  var seen = false;
+  for (k in fingers) {
+    if (!fingers[k].palm) seen = true;
+  }
   for (i = 0; i < e.changedTouches.length; i++) {
     t = e.changedTouches[i];
     choice = choiceAt(t.clientX, t.clientY);
     id = choice ? choice.getAttribute("data-id") : "";
     size = Math.max((t.radiusX || 0) * 2, (t.radiusY || 0) * 2);
+    var valid = !!id && size < 48 && !seen;
+    if (valid) seen = true;
     fingers[t.identifier] = {
       id: id,
-      palm: !id || size >= 48,
+      palm: !valid,
       x: t.clientX,
       y: t.clientY,
       at: Date.now(),
       used: false,
     };
-    if (id && size < 48) picks.push(t.identifier);
-  }
-  if ((prior > 0 || e.changedTouches.length > 1) && picks.length) {
-    id = picks[picks.length - 1];
-    fingers[id].palm = false;
-    fingers[id].used = true;
-    selectChoice(fingers[id].id);
-    for (i = 0; i < e.changedTouches.length; i++) {
-      t = e.changedTouches[i];
-      if (t.identifier !== id) fingers[t.identifier].palm = true;
-    }
   }
   if (e.cancelable) e.preventDefault();
 }
@@ -1985,6 +1953,33 @@ function rejectPalm(e) {
   return true;
 }
 
+var gateFirst = null;
+
+function gateTouchStart(e) {
+  if (!kidScreen() || findLive()) return;
+  var i;
+  var t;
+  var blocked = false;
+  for (i = 0; i < e.changedTouches.length; i++) {
+    t = e.changedTouches[i];
+    if (gateFirst === null) gateFirst = t.identifier;
+    else {
+      blocked = true;
+      if (e.cancelable) e.preventDefault();
+    }
+  }
+  if (blocked && e.stopImmediatePropagation) e.stopImmediatePropagation();
+}
+
+function gateTouchEnd(e) {
+  var i;
+  var t;
+  for (i = 0; i < e.changedTouches.length; i++) {
+    t = e.changedTouches[i];
+    if (t.identifier === gateFirst) gateFirst = null;
+  }
+}
+
 function onClick(e) {
   if (findResting(e) || rejectPalm(e)) return;
   if (trace.blockClick) {
@@ -1994,8 +1989,11 @@ function onClick(e) {
   var btn = e.target.closest ? e.target.closest("[data-action]") : null;
   if (!btn) return;
   var action = btn.getAttribute("data-action");
-  if (action === "grownups" || action === "home") return;
-  if (action === "letters") goLetters();
+  if (action === "grownups") return;
+  if (action === "home") {
+    if (save.pin && ui.screen !== "grownups") return;
+    goHome();
+  } else if (action === "letters") goLetters();
   else if (action === "numbers") goNumbers();
   else if (action === "shapes") goShapes();
   else if (action === "colors") goColors();
@@ -2007,11 +2005,8 @@ function onClick(e) {
     if (!challengeLocked("prev")) step(-1);
   } else if (action === "mode") setMode(btn.getAttribute("data-mode"));
   else if (action === "hear") speakCurrent();
-  else if (action === "again") onAgain();
   else if (action === "pick") selectChoice(btn.getAttribute("data-id"));
   else if (action === "dot") onDot(btn.getAttribute("data-i"));
-  else if (action === "ten") onTen(btn.getAttribute("data-i"));
-  else if (action === "one") onOne(btn.getAttribute("data-i"));
   else if (action === "letter-range") setLetterRange(btn.getAttribute("data-id"));
   else if (action === "letter-form") setLetterForm(btn.getAttribute("data-id"));
   else if (action === "number-range") setNumberRange(btn.getAttribute("data-id"));
@@ -2036,32 +2031,28 @@ function onClick(e) {
   else if (action === "notes-done") dismissNotes();
 }
 
+var holdPointerId = null;
+
 function clearHold() {
   if (holdTimer) window.clearTimeout(holdTimer);
   holdTimer = 0;
   if (holdEl) holdEl.classList.remove("holding");
   holdEl = null;
+  holdPointerId = null;
 }
 
-function startHold(el, e, kind) {
-  clearHold();
+function startHold(el, e) {
+  if (holdTimer) return;
+  holdPointerId = e && e.pointerId != null ? e.pointerId : null;
   holdEl = el;
-  holdKind = kind || "grownups";
   el.classList.add("holding");
   if (e && e.preventDefault) e.preventDefault();
   holdTimer = window.setTimeout(function () {
-    var which = holdKind;
     holdTimer = 0;
     holdEl = null;
-    holdKind = "";
-    if (which === "home") holdHome();
-    else holdGrown();
+    holdPointerId = null;
+    holdGrown();
   }, 700);
-}
-
-function holdHome() {
-  if (save.pin && ui.screen !== "grownups") return;
-  goHome();
 }
 
 function holdGrown() {
@@ -2464,7 +2455,7 @@ function traceProgress() {
 
 function startDraw(e, svg) {
   if (e.button && e.button !== 0) return;
-  if (trace.drawing) endDraw();
+  if (trace.drawing) return;
   beginStroke();
   trace.drawing = true;
   trace.pointerId = e.pointerId;
@@ -2499,15 +2490,9 @@ function addPoint(e, svg) {
 
 function onDown(e) {
   if (findResting(e) || rejectPalm(e)) return;
-  var home = e.target.closest ? e.target.closest("[data-action='home']") : null;
-  if (home) {
-    if (save.pin && ui.screen !== "grownups") return;
-    startHold(home, e, "home");
-    return;
-  }
   var grown = e.target.closest ? e.target.closest("[data-action='grownups']") : null;
   if (grown) {
-    startHold(grown, e, "grownups");
+    startHold(grown, e);
     return;
   }
   if ((ui.screen === "letters" || ui.screen === "shapes") && ui.mode === "trace") {
@@ -2556,7 +2541,7 @@ function endDraw(e) {
 
 function onUp(e) {
   if (e && e.pointerId != null) delete palmIds[e.pointerId];
-  clearHold();
+  if (holdPointerId === null || e == null || e.pointerId == null || e.pointerId === holdPointerId) clearHold();
   endDraw(e);
 }
 
@@ -2598,7 +2583,7 @@ var INTRO = [
   },
   {
     title: "Sun and house",
-    body: "Hold the sun to open grown-ups. Hold the house to go home. A tap on the house does nothing.",
+    body: "Hold the sun to open grown-ups. Tap the house to go home.",
   },
   {
     title: "A PIN",
@@ -2782,6 +2767,9 @@ function registerWorker() {
 function init() {
   var app = document.getElementById("app");
   app.addEventListener("click", onClick);
+  document.addEventListener("touchstart", gateTouchStart, { capture: true, passive: false });
+  document.addEventListener("touchend", gateTouchEnd, { capture: true });
+  document.addEventListener("touchcancel", gateTouchEnd, { capture: true });
   document.addEventListener("touchstart", onFindTouchStart, { capture: true, passive: false });
   document.addEventListener("touchend", onFindTouchEnd, { capture: true, passive: false });
   document.addEventListener("touchcancel", onFindTouchCancel, { capture: true });
@@ -2790,8 +2778,6 @@ function init() {
   document.addEventListener("pointerup", onUp);
   document.addEventListener("pointercancel", onUp);
   document.addEventListener("lostpointercapture", onUp);
-  document.addEventListener("touchend", onUp, { passive: true });
-  document.addEventListener("touchcancel", onUp, { passive: true });
   document.addEventListener("contextmenu", function (e) {
     e.preventDefault();
   });

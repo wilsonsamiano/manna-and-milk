@@ -118,7 +118,14 @@ button:focus-visible {
 .sun-btn,
 .home-btn {
   position: relative;
+}
+
+.sun-btn {
   touch-action: none;
+}
+
+.home-btn {
+  touch-action: manipulation;
 }
 
 .sun-btn {
@@ -342,6 +349,7 @@ button:focus-visible {
   touch-action: manipulation;
 }
 .screen.boxes .nav,
+.screen.boxes .modes-top,
 .screen.boxes .again,
 .screen.boxes .prompt,
 .screen.boxes .feedback,
@@ -574,6 +582,7 @@ button:focus-visible {
   font-size: 18px;
   font-weight: 800;
   background: var(--card);
+  pointer-events: none;
 }
 
 .trace-wrap,
@@ -745,6 +754,13 @@ button.qty-ten.on {
 
 .nav-btn:disabled {
   opacity: 0.38;
+}
+
+.modes-top {
+  flex: 0 0 auto;
+  width: min(100%, 980px);
+  margin: 0 auto;
+  padding: 4px 10px 0;
 }
 
 .modes {
